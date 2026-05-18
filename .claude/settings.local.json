@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:api.anthropic.com)",
+      "Bash(ls -la '/c/Users/user/.claude/projects/h--CodingWorkspace-1-Working-PlantTree/b5b13e4c-a9fa-4eba-a321-0a7e5d47e649/tool-results/')",
+      "Read(//c/Users/user/.claude/projects/h--CodingWorkspace-1-Working-PlantTree/b5b13e4c-a9fa-4eba-a321-0a7e5d47e649/tool-results//**)",
+      "Bash(npm install *)",
+      "Bash(cd '/h/CodingWorkspace/1 Working/PlantTree' && cat package.json)",
+      "Read(//h/h/CodingWorkspace/1 Working/PlantTree/**)",
+      "Bash(npx tsc *)",
+      "Bash(npx next *)",
+      "Bash(sleep 8 && cat '/c/Users/user/AppData/Local/Temp/claude/h--CodingWorkspace-1-Working-PlantTree/b5b13e4c-a9fa-4eba-a321-0a7e5d47e649/tasks/bixjkw6qw.output' 2>&1 | head -30)",
+      "Read(//c/Users/user/AppData/Local/Temp/claude/h--CodingWorkspace-1-Working-PlantTree/b5b13e4c-a9fa-4eba-a321-0a7e5d47e649/tasks/**)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code} · %{size_download} bytes\\\\n\" http://localhost:3017/)",
+      "Bash(curl -s http://localhost:3017/)",
+      "Bash(ls '/c/Users/user/.claude/projects/h--CodingWorkspace-1-Working-PlantTree/memory/' 2>&1)",
+      "Read(//c/Users/user/.claude/projects/h--CodingWorkspace-1-Working-PlantTree/**)",
+      "Bash(git init *)",
+      "Bash(git --version)"
+    ]
+  }
+}
