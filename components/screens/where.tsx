@@ -7,27 +7,33 @@ import {
   Stamp,
   UttarakhandMap,
 } from "@/components/shared";
+import { PlotView } from "@/components/plot";
+import { SCIENCE_AXES, type DistrictStatus } from "@/lib/data";
 import {
-  COMING_NEXT,
-  DISTRICTS,
-  FARMERS,
-  SCIENCE_AXES,
-  type DistrictStatus,
-} from "@/lib/data";
+  useComingNextDistricts,
+  useDistricts,
+  useFarmers,
+  usePlots,
+} from "@/lib/db/hooks";
 import type { Screen } from "./types";
 
 export function Where({ navigate }: { navigate: (s: Screen) => void }) {
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<DistrictStatus | "all">("all");
 
+  const districts = useDistricts() ?? [];
+  const farmers = useFarmers() ?? [];
+  const plots = usePlots() ?? [];
+  const comingNext = useComingNextDistricts() ?? [];
+
   const filtered =
     statusFilter === "all"
-      ? DISTRICTS
-      : DISTRICTS.filter((d) => d.status === statusFilter);
+      ? districts
+      : districts.filter((d) => d.status === statusFilter);
   const counts = {
-    active: DISTRICTS.filter((d) => d.status === "active").length,
-    "field-visited": DISTRICTS.filter((d) => d.status === "field-visited").length,
-    researching: DISTRICTS.filter((d) => d.status === "researching").length,
+    active: districts.filter((d) => d.status === "active").length,
+    "field-visited": districts.filter((d) => d.status === "field-visited").length,
+    researching: districts.filter((d) => d.status === "researching").length,
   };
 
   return (
@@ -146,7 +152,7 @@ export function Where({ navigate }: { navigate: (s: Screen) => void }) {
             <div
               style={{ fontSize: 13, color: "var(--ink-2)", lineHeight: 1.55 }}
             >
-              <strong>{DISTRICTS.length} districts</strong> in our active scope —
+              <strong>{districts.length} districts</strong> in our active scope —
               and growing. Plots move from{" "}
               <span style={{ color: "var(--muted)" }}>on the list</span> →{" "}
               <span style={{ color: "var(--terra)" }}>field-visited</span> →{" "}
@@ -410,7 +416,8 @@ export function Where({ navigate }: { navigate: (s: Screen) => void }) {
 
           <div className="col" style={{ gap: 18 }}>
             {filtered.map((d) => {
-              const farmersHere = FARMERS.filter((f) => f.districtId === d.id);
+              const farmersHere = farmers.filter((f) => f.districtId === d.id);
+              const plotsHere = plots.filter((p) => p.districtId === d.id);
               const statusColor =
                 d.status === "active"
                   ? "var(--moss)"
@@ -667,6 +674,103 @@ export function Where({ navigate }: { navigate: (s: Screen) => void }) {
                     </p>
                   </div>
 
+                  {plotsHere.length > 0 && (
+                    <div style={{ marginTop: 18 }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "baseline",
+                          marginBottom: 10,
+                        }}
+                      >
+                        <div className="eyebrow">Plots inside {d.name}</div>
+                        <div
+                          style={{
+                            fontFamily: "var(--font-mono)",
+                            fontSize: 10,
+                            color: "var(--muted)",
+                            letterSpacing: "0.04em",
+                          }}
+                        >
+                          {plotsHere.length} listed · the actual land we plant on
+                        </div>
+                      </div>
+                      <div
+                        className="col"
+                        style={{ display: "flex", flexDirection: "column", gap: 12 }}
+                      >
+                        {plotsHere.map((p) => {
+                          const primary = farmers.find(
+                            (f) => f.id === p.primaryFarmerId,
+                          );
+                          return (
+                            <div
+                              key={p.id}
+                              style={{
+                                display: "grid",
+                                gridTemplateColumns: "140px 1fr",
+                                gap: 14,
+                                alignItems: "stretch",
+                                background: "var(--paper)",
+                                border: "1px solid var(--line)",
+                                borderRadius: 10,
+                                overflow: "hidden",
+                              }}
+                            >
+                              <PlotView plot={p} height={140} showLabels={false} />
+                              <div
+                                style={{
+                                  padding: "12px 14px",
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  justifyContent: "space-between",
+                                  gap: 6,
+                                }}
+                              >
+                                <div>
+                                  <div
+                                    style={{
+                                      fontFamily: "var(--font-display)",
+                                      fontStyle: "italic",
+                                      fontSize: 20,
+                                    }}
+                                  >
+                                    {p.name}
+                                  </div>
+                                  <div
+                                    style={{
+                                      fontFamily: "var(--font-mono)",
+                                      fontSize: 10,
+                                      color: "var(--muted)",
+                                      letterSpacing: "0.06em",
+                                      marginTop: 2,
+                                    }}
+                                  >
+                                    &ldquo;{p.nameEn}&rdquo; · {p.village}
+                                    {primary
+                                      ? ` · ${primary.name.split(" ")[0]}-ji`
+                                      : ""}
+                                  </div>
+                                </div>
+                                <div
+                                  style={{
+                                    fontFamily: "var(--font-mono)",
+                                    fontSize: 11,
+                                    color: "var(--ink-2)",
+                                    letterSpacing: "0.04em",
+                                  }}
+                                >
+                                  {p.areaHa} ha · {p.elevationM}m · {p.slopeDeg}° slope
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
                   {d.status === "active" && farmersHere.length > 0 && (
                     <div
                       style={{
@@ -744,7 +848,7 @@ export function Where({ navigate }: { navigate: (s: Screen) => void }) {
           reached out, NGOs we&apos;re partnering with. Help us reach them faster.
         </p>
         <div className="grid-4">
-          {COMING_NEXT.map((c) => (
+          {comingNext.map((c) => (
             <div
               key={c.name}
               className="card"

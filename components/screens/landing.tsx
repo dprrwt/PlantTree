@@ -9,10 +9,13 @@ import {
   Stamp,
   TreeViz,
 } from "@/components/shared";
-import { DISTRICTS, FARMERS } from "@/lib/data";
+import { useDistricts, useFarmers } from "@/lib/db/hooks";
 import type { Screen } from "./types";
 
 export function Landing({ navigate }: { navigate: (s: Screen) => void }) {
+  const districts = useDistricts() ?? [];
+  const farmers = useFarmers() ?? [];
+
   return (
     <div>
       {/* HERO */}
@@ -97,7 +100,12 @@ export function Landing({ navigate }: { navigate: (s: Screen) => void }) {
               <button className="btn moss" onClick={() => navigate("browse")}>
                 Choose a farmer <span className="arrow">→</span>
               </button>
-              <button className="btn ghost" onClick={() => navigate("donor")}>
+              <button
+                className="btn ghost"
+                onClick={() => {
+                  if (typeof window !== "undefined") window.location.href = "/donor";
+                }}
+              >
                 See a donor&apos;s grove
               </button>
             </div>
@@ -639,11 +647,11 @@ export function Landing({ navigate }: { navigate: (s: Screen) => void }) {
               }}
             >
               We&apos;re starting in Uttarakhand —{" "}
-              {DISTRICTS.filter((d) => d.status === "active").length} districts
+              {districts.filter((d) => d.status === "active").length} districts
               actively planting,{" "}
-              {DISTRICTS.filter((d) => d.status === "field-visited").length}{" "}
+              {districts.filter((d) => d.status === "field-visited").length}{" "}
               field-visited and preparing,{" "}
-              {DISTRICTS.filter((d) => d.status === "researching").length} under
+              {districts.filter((d) => d.status === "researching").length} under
               desk research.
             </p>
           </div>
@@ -668,17 +676,17 @@ export function Landing({ navigate }: { navigate: (s: Screen) => void }) {
             {
               c: "var(--moss)",
               l: "Active",
-              n: DISTRICTS.filter((d) => d.status === "active").length,
+              n: districts.filter((d) => d.status === "active").length,
             },
             {
               c: "var(--terra)",
               l: "Field-visited",
-              n: DISTRICTS.filter((d) => d.status === "field-visited").length,
+              n: districts.filter((d) => d.status === "field-visited").length,
             },
             {
               c: "var(--muted)",
               l: "Researching",
-              n: DISTRICTS.filter((d) => d.status === "researching").length,
+              n: districts.filter((d) => d.status === "researching").length,
             },
           ].map((s) => (
             <div
@@ -701,7 +709,7 @@ export function Landing({ navigate }: { navigate: (s: Screen) => void }) {
         </div>
 
         <div className="grid-3">
-          {DISTRICTS.slice(0, 3).map((d) => {
+          {districts.slice(0, 3).map((d) => {
             const statusColor =
               d.status === "active"
                 ? "var(--moss)"
@@ -790,12 +798,12 @@ export function Landing({ navigate }: { navigate: (s: Screen) => void }) {
         </div>
       </section>
 
-      {/* FARMERS */}
+      {/* farmers */}
       <section className="shell section" style={{ paddingTop: 16 }}>
         <Ornament label="The people doing the work" />
         <div style={{ height: 28 }}></div>
         <div className="grid-3">
-          {FARMERS.slice(0, 3).map((f, i) => (
+          {farmers.slice(0, 3).map((f, i) => (
             <button
               key={f.id}
               onClick={() => navigate("browse")}
@@ -857,7 +865,10 @@ export function Landing({ navigate }: { navigate: (s: Screen) => void }) {
               >
                 <span>{f.years} yrs with us</span>
                 <span>{f.treesPlanted} trees</span>
-                <span>{f.plot.split("·")[0].trim()}</span>
+                <span>
+                  {(f.plotIds ?? []).length} plot
+                  {(f.plotIds ?? []).length === 1 ? "" : "s"}
+                </span>
               </div>
             </button>
           ))}
@@ -930,7 +941,9 @@ export function Landing({ navigate }: { navigate: (s: Screen) => void }) {
                   borderColor:
                     "color-mix(in oklch, var(--paper) 40%, transparent)",
                 }}
-                onClick={() => navigate("farmer")}
+                onClick={() => {
+                  if (typeof window !== "undefined") window.location.href = "/farmer";
+                }}
               >
                 I&apos;m a farmer or partner
               </button>

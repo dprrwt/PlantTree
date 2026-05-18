@@ -31,6 +31,7 @@ export interface Farmer {
   name: string;
   village: string;
   districtId: string;
+  plotIds?: string[];        // ids of plots this farmer tends (primary or co-steward)
   upi: string;
   phone: string;
   years: number;
@@ -67,6 +68,7 @@ export interface Tree {
   sci: string;
   farmerId: string;
   districtId: string;
+  plotId?: string;
   planted: string;
   paid: number;
   stage: 0 | 1 | 2 | 3 | 4;
@@ -75,6 +77,43 @@ export interface Tree {
   lastUpdate: string;
   photos?: TreePhoto[];
   milestones?: TreeMilestone[];
+}
+
+export type LandTenure = "private" | "van-panchayat" | "community" | "lease";
+export type PlotStatus = "researching" | "field-visited" | "planting";
+
+export interface PlotSoil {
+  N: number;
+  P: number;
+  K: number;
+  pH: number;
+  OM: number;
+}
+
+export interface Plot {
+  id: string;
+  name: string;                // local-script: "Naula ke Paas"
+  nameEn: string;              // English subtitle: "Near the spring"
+  primaryFarmerId: string;
+  coFarmers: string[];
+  village: string;
+  districtId: string;
+  lat: number | null;
+  lng: number | null;
+  areaHa: number;
+  elevationM: number;
+  slopeDeg: number;
+  aspect: string | null;
+  waterSource: string | null;
+  landTenure: LandTenure;
+  panchayatVerified: boolean;
+  soil: PlotSoil | null;
+  status: PlotStatus;
+  joinedAt: string | null;
+  treesPlanted: number;
+  treesAlive: number;
+  description: string | null;
+  photoTone: PhotoTone | null;
 }
 
 export interface Grove {

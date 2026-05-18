@@ -656,7 +656,9 @@ export function How({ navigate }: { navigate: (s: Screen) => void }) {
                 <button
                   className="btn ghost sm"
                   style={{ marginTop: 22 }}
-                  onClick={() => navigate("donor")}
+                  onClick={() => {
+                    if (typeof window !== "undefined") window.location.href = "/donor";
+                  }}
                 >
                   See an example tree page <span className="arrow">→</span>
                 </button>

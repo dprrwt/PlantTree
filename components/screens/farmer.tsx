@@ -3,26 +3,23 @@
 import React, { useState } from "react";
 import { Chip, Placeholder, Stamp } from "@/components/shared";
 import { MessageThread, ThreadPreview } from "@/components/messaging";
-import {
-  DISTRICTS,
-  FARMERS,
-  FARMER_INBOX,
-  THREADS,
-  type Farmer as FarmerType,
-  type FarmerTree,
-} from "@/lib/data";
+import type { Farmer as FarmerType, FarmerTree } from "@/lib/data";
+import type { FarmerWorkspace } from "@/lib/db/persona-queries";
 
 type Tab = "trees" | "messages" | "earnings";
 
-export function Farmer() {
-  const farmer = FARMERS.find((f) => f.id === FARMER_INBOX.farmerId)!;
-  const district = DISTRICTS.find((d) => d.id === farmer.districtId)!;
-  const v = FARMER_INBOX;
+export function Farmer({ workspace }: { workspace: FarmerWorkspace }) {
+  const farmer = workspace.farmer;
+  const district = workspace.district;
+  const v = workspace;
   const [tab, setTab] = useState<Tab>("trees");
   const [selectedTreeId, setSelectedTreeId] = useState<string | null>(null);
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
 
-  const myThreads = Object.values(THREADS).filter((t) => t.farmerId === farmer.id);
+  const myThreads = workspace.threadPreviews;
+  const selectedPreview = selectedThreadId
+    ? myThreads.find((p) => p.treeId === selectedThreadId)
+    : null;
 
   if (selectedTreeId) {
     const tree = v.trees.find((t) => t.id === selectedTreeId);
@@ -389,25 +386,25 @@ export function Farmer() {
               <div className="eyebrow">Inbox · {myThreads.length}</div>
             </div>
             <div>
-              {myThreads.map((t) => (
+              {myThreads.map((p) => (
                 <ThreadPreview
-                  key={t.treeId}
-                  thread={t}
+                  key={p.treeId}
+                  thread={p.thread}
                   farmer={farmer}
-                  donorName={t.donor}
+                  donorName={p.donorName}
                   role="farmer"
-                  selected={selectedThreadId === t.treeId}
-                  onClick={() => setSelectedThreadId(t.treeId)}
+                  selected={selectedThreadId === p.treeId}
+                  onClick={() => setSelectedThreadId(p.treeId)}
                 />
               ))}
             </div>
           </div>
 
-          {selectedThreadId ? (
+          {selectedPreview ? (
             <MessageThread
-              thread={THREADS[selectedThreadId]}
+              thread={selectedPreview.thread}
               farmer={farmer}
-              donorName={THREADS[selectedThreadId].donor}
+              donorName={selectedPreview.donorName}
               height={620}
             />
           ) : (

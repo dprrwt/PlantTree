@@ -6,8 +6,6 @@ import { Landing } from "./screens/landing";
 import { Where } from "./screens/where";
 import { How } from "./screens/how";
 import { Picker } from "./screens/picker";
-import { Donor } from "./screens/donor";
-import { Farmer } from "./screens/farmer";
 import {
   TweakButton,
   TweakRadio,
@@ -164,41 +162,10 @@ function TopBar({
               </button>
             </>
           )}
-          {role === "donor" && (
-            <>
-              <button
-                onClick={() => navigate("donor")}
-                className={screen === "donor" ? "active" : ""}
-              >
-                My trees
-              </button>
-              <button
-                onClick={() => navigate("browse")}
-                className={screen === "browse" ? "active" : ""}
-              >
-                Plant another
-              </button>
-              <button>Receipts</button>
-            </>
-          )}
-          {role === "operator" && (
-            <>
-              <button
-                onClick={() => navigate("farmer")}
-                className={
-                  screen === "farmer" || screen === "operator" ? "active" : ""
-                }
-              >
-                My trees
-              </button>
-              <button onClick={() => navigate("farmer")}>Messages</button>
-              <button onClick={() => navigate("farmer")}>Earnings</button>
-            </>
-          )}
         </div>
         <div
           className="role-switch"
-          title="Prototype-only: preview the same site from 3 viewpoints"
+          title="Prototype-only: preview the same site from 4 viewpoints"
         >
           <button
             onClick={() => {
@@ -211,21 +178,30 @@ function TopBar({
           </button>
           <button
             onClick={() => {
-              setRole("donor");
-              navigate("donor");
+              if (typeof window !== "undefined") {
+                window.location.href = "/donor";
+              }
             }}
-            className={role === "donor" ? "active" : ""}
           >
             donor
           </button>
           <button
             onClick={() => {
-              setRole("operator");
-              navigate("farmer");
+              if (typeof window !== "undefined") {
+                window.location.href = "/farmer";
+              }
             }}
-            className={role === "operator" ? "active" : ""}
           >
             farmer
+          </button>
+          <button
+            onClick={() => {
+              if (typeof window !== "undefined") {
+                window.location.href = "/admin";
+              }
+            }}
+          >
+            operator
           </button>
         </div>
       </div>
@@ -249,13 +225,6 @@ export function App() {
     }
   }
 
-  // Auto-redirect on role change to a role-appropriate screen.
-  useEffect(() => {
-    if (role === "donor" && screen === "home") setScreen("donor");
-    if (role === "operator" && screen !== "farmer") setScreen("farmer");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [role]);
-
   return (
     <div>
       <TopBar
@@ -270,8 +239,6 @@ export function App() {
       {(screen === "browse" || screen === "pick") && (
         <Picker navigate={navigate} />
       )}
-      {screen === "donor" && <Donor navigate={navigate} />}
-      {(screen === "operator" || screen === "farmer") && <Farmer />}
 
       <TweaksPanel title="Tweaks">
         <TweakSection title="Palette" subtitle="Tonal direction for the whole site">
@@ -361,8 +328,9 @@ export function App() {
           <div style={{ height: 6 }}></div>
           <TweakButton
             onClick={() => {
-              setRole("donor");
-              navigate("donor");
+              if (typeof window !== "undefined") {
+                window.location.href = "/donor";
+              }
             }}
           >
             Donor · my trees
@@ -370,11 +338,22 @@ export function App() {
           <div style={{ height: 6 }}></div>
           <TweakButton
             onClick={() => {
-              setRole("operator");
-              navigate("farmer");
+              if (typeof window !== "undefined") {
+                window.location.href = "/farmer";
+              }
             }}
           >
             Farmer · workspace
+          </TweakButton>
+          <div style={{ height: 6 }}></div>
+          <TweakButton
+            onClick={() => {
+              if (typeof window !== "undefined") {
+                window.location.href = "/admin";
+              }
+            }}
+          >
+            Operator · admin
           </TweakButton>
         </TweakSection>
       </TweaksPanel>

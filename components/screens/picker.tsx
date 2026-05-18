@@ -11,7 +11,10 @@ import {
   UttarakhandMap,
 } from "@/components/shared";
 import { MessageThread } from "@/components/messaging";
-import { DISTRICTS, FARMERS, type District, type Farmer, type Thread } from "@/lib/data";
+import { PlotCard } from "@/components/plot";
+import { type District, type Farmer, type Plot, type Thread } from "@/lib/data";
+import { useDistricts, useFarmers, usePlots } from "@/lib/db/hooks";
+import { submitDonation } from "@/app/donate/actions";
 import type { Screen } from "./types";
 
 type PickerStep = "list" | "profile" | "pay" | "success";
@@ -27,14 +30,38 @@ export function Picker({ navigate }: { navigate: (s: Screen) => void }) {
   const [donorEmail, setDonorEmail] = useState("");
   const [donorPhone, setDonorPhone] = useState("");
   const [treeNum, setTreeNum] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const farmer = farmerId ? FARMERS.find((f) => f.id === farmerId) ?? null : null;
-  const district = farmer ? DISTRICTS.find((d) => d.id === farmer.districtId) ?? null : null;
+  const districts = useDistricts() ?? [];
+  const farmers = useFarmers() ?? [];
+  const plots = usePlots() ?? [];
 
-  function goToSuccess() {
-    setTreeNum(
-      "PT-" + String(Math.floor(Math.random() * 90) + 70).padStart(3, "0"),
-    );
+  const farmer = farmerId ? farmers.find((f) => f.id === farmerId) ?? null : null;
+  const district = farmer ? districts.find((d) => d.id === farmer.districtId) ?? null : null;
+
+  async function goToSuccess() {
+    if (!farmer) return;
+    setSubmitting(true);
+    setSubmitError(null);
+
+    const fd = new FormData();
+    fd.set("farmer_id", farmer.id);
+    fd.set("plan", plan);
+    fd.set("donor_name", donorName);
+    fd.set("donor_email", donorEmail);
+    fd.set("donor_phone", donorPhone);
+    fd.set("payment_method", "upi_manual");
+
+    const result = await submitDonation({ error: null }, fd);
+    setSubmitting(false);
+
+    if (result.error) {
+      setSubmitError(result.error);
+      return;
+    }
+
+    setTreeNum(result.reference ?? "—");
     setStep("success");
   }
 
@@ -64,6 +91,8 @@ export function Picker({ navigate }: { navigate: (s: Screen) => void }) {
         setDonorEmail={setDonorEmail}
         donorPhone={donorPhone}
         setDonorPhone={setDonorPhone}
+        submitting={submitting}
+        submitError={submitError}
         onBack={() => setStep("profile")}
         onDone={goToSuccess}
       />
@@ -75,6 +104,7 @@ export function Picker({ navigate }: { navigate: (s: Screen) => void }) {
       <FarmerProfile
         farmer={farmer}
         district={district}
+        plots={plots.filter((p) => (farmer.plotIds ?? []).includes(p.id))}
         plan={plan}
         setPlan={setPlan}
         onBack={() => setStep("list")}
@@ -85,8 +115,8 @@ export function Picker({ navigate }: { navigate: (s: Screen) => void }) {
 
   // LIST view
   const visibleFarmers = selectedDistrict
-    ? FARMERS.filter((f) => f.districtId === selectedDistrict)
-    : FARMERS;
+    ? farmers.filter((f) => f.districtId === selectedDistrict)
+    : farmers;
 
   return (
     <div className="shell" style={{ paddingTop: 36, paddingBottom: 80 }}>
@@ -122,7 +152,7 @@ export function Picker({ navigate }: { navigate: (s: Screen) => void }) {
               </Stamp>
               <Chip>Uttarakhand · India</Chip>
               <Chip>
-                {FARMERS.length} farmers · {DISTRICTS.length} districts
+                {farmers.length} farmers · {districts.length} districts
               </Chip>
             </div>
             <h1 style={{ fontSize: 64, lineHeight: 1.02 }}>
@@ -150,7 +180,7 @@ export function Picker({ navigate }: { navigate: (s: Screen) => void }) {
       >
         <div style={{ position: "sticky", top: 88 }}>
           <UttarakhandMap
-            pins={DISTRICTS}
+            pins={districts}
             selected={selectedDistrict}
             onSelect={(id) =>
               setSelectedDistrict(id === selectedDistrict ? null : id)
@@ -173,7 +203,7 @@ export function Picker({ navigate }: { navigate: (s: Screen) => void }) {
             >
               All districts
             </button>
-            {DISTRICTS.map((d) => (
+            {districts.map((d) => (
               <button
                 key={d.id}
                 onClick={() =>
@@ -205,10 +235,10 @@ export function Picker({ navigate }: { navigate: (s: Screen) => void }) {
               }}
             >
               <div className="eyebrow" style={{ marginBottom: 8 }}>
-                About {DISTRICTS.find((d) => d.id === selectedDistrict)?.name}
+                About {districts.find((d) => d.id === selectedDistrict)?.name}
               </div>
               <p style={{ margin: 0, color: "var(--ink-2)", fontSize: 13 }}>
-                {DISTRICTS.find((d) => d.id === selectedDistrict)?.why}
+                {districts.find((d) => d.id === selectedDistrict)?.why}
               </p>
             </div>
           )}
@@ -216,7 +246,7 @@ export function Picker({ navigate }: { navigate: (s: Screen) => void }) {
 
         <div className="col" style={{ gap: 18 }}>
           {visibleFarmers.map((f) => {
-            const d = DISTRICTS.find((x) => x.id === f.districtId);
+            const d = districts.find((x) => x.id === f.districtId);
             return (
               <button
                 key={f.id}
@@ -388,6 +418,7 @@ export function Picker({ navigate }: { navigate: (s: Screen) => void }) {
 function FarmerProfile({
   farmer,
   district,
+  plots,
   plan,
   setPlan,
   onBack,
@@ -395,6 +426,7 @@ function FarmerProfile({
 }: {
   farmer: Farmer;
   district: District;
+  plots: Plot[];
   plan: Plan;
   setPlan: (p: Plan) => void;
   onBack: () => void;
@@ -485,10 +517,23 @@ function FarmerProfile({
             </div>
           </div>
 
-          <div className="grid-3" style={{ marginBottom: 28 }}>
-            <Placeholder label="plot · north slope" tone="moss" aspect="3/4" />
-            <Placeholder label="sapling rows" tone="terra" aspect="3/4" />
-            <Placeholder label="harvest · oak" tone="moss" aspect="3/4" />
+          <Ornament
+            label={`${farmer.name.split(" ")[0]}-ji's ${plots.length > 1 ? "plots" : "plot"} · the actual land`}
+          />
+          <div style={{ height: 16 }} />
+          <div
+            className="col"
+            style={{ gap: 18, marginBottom: 28 }}
+          >
+            {plots.length > 0 ? (
+              plots.map((p) => <PlotCard key={p.id} plot={p} />)
+            ) : (
+              <Placeholder
+                label="plot details coming soon"
+                tone="moss"
+                aspect="16/9"
+              />
+            )}
           </div>
 
           <Ornament label={`Why we plant in ${district.name}`} />
@@ -855,6 +900,8 @@ function PayFlow({
   setDonorEmail,
   donorPhone,
   setDonorPhone,
+  submitting,
+  submitError,
   onBack,
   onDone,
 }: {
@@ -869,6 +916,8 @@ function PayFlow({
   setDonorEmail: (v: string) => void;
   donorPhone: string;
   setDonorPhone: (v: string) => void;
+  submitting: boolean;
+  submitError: string | null;
   onBack: () => void;
   onDone: () => void;
 }) {
@@ -1141,19 +1190,39 @@ function PayFlow({
 
             <button
               className="btn moss"
-              disabled={!paymentConfirmed}
+              disabled={!paymentConfirmed || submitting}
               onClick={onDone}
               style={{
                 marginTop: 18,
                 width: "100%",
                 justifyContent: "center",
-                opacity: paymentConfirmed ? 1 : 0.4,
-                cursor: paymentConfirmed ? "pointer" : "not-allowed",
+                opacity: paymentConfirmed && !submitting ? 1 : 0.4,
+                cursor:
+                  paymentConfirmed && !submitting ? "pointer" : "not-allowed",
               }}
             >
-              I&apos;ve paid — open my chat with {farmer.name.split(" ")[0]}-ji{" "}
-              <span className="arrow">→</span>
+              {submitting
+                ? "Submitting your donation..."
+                : `I've paid — open my chat with ${farmer.name.split(" ")[0]}-ji`}{" "}
+              {!submitting && <span className="arrow">→</span>}
             </button>
+
+            {submitError && (
+              <div
+                style={{
+                  marginTop: 12,
+                  padding: "10px 12px",
+                  background:
+                    "color-mix(in oklch, var(--terra-soft) 35%, var(--paper))",
+                  border: "1px solid var(--terra)",
+                  borderRadius: 6,
+                  color: "var(--terra)",
+                  fontSize: 13,
+                }}
+              >
+                {submitError}
+              </div>
+            )}
           </div>
 
           <div
@@ -1237,7 +1306,7 @@ function ThreadSuccess({
     <div className="shell" style={{ paddingTop: 36, paddingBottom: 80 }}>
       <div style={{ marginBottom: 28, textAlign: "center" }}>
         <Stamp color="var(--moss)" rotation={-2}>
-          Tree #{treeNum} reserved
+          Donation #{treeNum} received · verification pending
         </Stamp>
         <h1 style={{ marginTop: 20, marginBottom: 14, fontSize: 56 }}>
           You&apos;re in the same room as{" "}
@@ -1362,7 +1431,9 @@ function ThreadSuccess({
             <button
               className="btn ghost sm"
               style={{ marginTop: 12 }}
-              onClick={() => navigate("donor")}
+              onClick={() => {
+                if (typeof window !== "undefined") window.location.href = "/donor";
+              }}
             >
               Go to my trees <span className="arrow">→</span>
             </button>

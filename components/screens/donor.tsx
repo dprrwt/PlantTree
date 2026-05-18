@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import {
   Chip,
   Ornament,
@@ -10,12 +11,11 @@ import {
   UttarakhandMap,
 } from "@/components/shared";
 import { MessageBubble, MessageThread } from "@/components/messaging";
-import { DISTRICTS, FARMERS, THREADS, USER_GROVE, type Tree } from "@/lib/data";
-import type { Screen } from "./types";
+import { PlotView } from "@/components/plot";
+import type { DonorGrove, DonorTree } from "@/lib/db/persona-queries";
 
-export function Donor({ navigate }: { navigate: (s: Screen) => void }) {
+export function Donor({ grove }: { grove: DonorGrove }) {
   const [selectedTreeId, setSelectedTreeId] = useState<string | null>(null);
-  const grove = USER_GROVE;
 
   if (selectedTreeId) {
     const tree = grove.trees.find((t) => t.id === selectedTreeId);
@@ -101,15 +101,15 @@ export function Donor({ navigate }: { navigate: (s: Screen) => void }) {
             {grove.trees.length} entries
           </span>
         </div>
-        <button className="btn moss sm" onClick={() => navigate("browse")}>
+        <Link href="/" className="btn moss sm" style={{ textDecoration: "none" }}>
           Plant another <span className="arrow">→</span>
-        </button>
+        </Link>
       </div>
 
       <div className="grid-2" style={{ marginBottom: 48 }}>
         {grove.trees.map((t) => {
-          const district = DISTRICTS.find((d) => d.id === t.districtId);
-          const farmer = FARMERS.find((f) => f.id === t.farmerId);
+          const district = t.district;
+          const farmer = t.farmer;
           const stages = ["seed", "sprout", "sapling", "young", "mature"];
           return (
             <button
@@ -290,11 +290,11 @@ export function Donor({ navigate }: { navigate: (s: Screen) => void }) {
   );
 }
 
-function TreeDetail({ tree, onBack }: { tree: Tree; onBack: () => void }) {
-  const district = DISTRICTS.find((d) => d.id === tree.districtId);
-  const farmer = FARMERS.find((f) => f.id === tree.farmerId);
+function TreeDetail({ tree, onBack }: { tree: DonorTree; onBack: () => void }) {
+  const district = tree.district;
+  const farmer = tree.farmer;
   const stages = ["Seed", "Sprout", "Sapling", "Young tree", "Mature"];
-  const thread = THREADS[tree.id];
+  const thread = tree.thread;
   const [showFullThread, setShowFullThread] = useState(false);
 
   if (showFullThread && thread && farmer) {
@@ -503,25 +503,117 @@ function TreeDetail({ tree, onBack }: { tree: Tree; onBack: () => void }) {
             >
               <div>
                 <div className="eyebrow">Where it lives</div>
+                {tree.plot ? (
+                  <>
+                    <div
+                      style={{
+                        fontFamily: "var(--font-display)",
+                        fontSize: 26,
+                        fontStyle: "italic",
+                        marginTop: 2,
+                      }}
+                    >
+                      {tree.plot.name}
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: "var(--font-mono)",
+                        fontSize: 11,
+                        color: "var(--muted)",
+                        letterSpacing: "0.06em",
+                        marginTop: 2,
+                      }}
+                    >
+                      &ldquo;{tree.plot.nameEn}&rdquo; · {tree.plot.village}
+                      {district ? `, ${district.name}` : ""}
+                    </div>
+                  </>
+                ) : (
+                  <div
+                    style={{
+                      fontFamily: "var(--font-display)",
+                      fontSize: 22,
+                      marginTop: 2,
+                    }}
+                  >
+                    {farmer?.village}
+                  </div>
+                )}
+              </div>
+              {tree.plot ? (
+                <Chip>{tree.plot.elevationM}m</Chip>
+              ) : (
+                district && <Chip>{district.elevation}</Chip>
+              )}
+            </div>
+            {tree.plot ? (
+              <>
+                <PlotView plot={tree.plot} height={280} />
                 <div
                   style={{
-                    fontFamily: "var(--font-display)",
-                    fontSize: 22,
-                    marginTop: 2,
+                    marginTop: 14,
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: 12,
+                    fontSize: 13,
                   }}
                 >
-                  {farmer?.village}
+                  <div
+                    style={{
+                      padding: "10px 12px",
+                      background: "var(--paper-2)",
+                      borderRadius: 8,
+                    }}
+                  >
+                    <div className="eyebrow" style={{ marginBottom: 4 }}>
+                      The plot
+                    </div>
+                    <div style={{ color: "var(--ink-2)" }}>
+                      {tree.plot.areaHa} ha · {tree.plot.slopeDeg}° slope
+                      {tree.plot.aspect ? ` · ${tree.plot.aspect}` : ""}
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      padding: "10px 12px",
+                      background: "var(--paper-2)",
+                      borderRadius: 8,
+                    }}
+                  >
+                    <div className="eyebrow" style={{ marginBottom: 4 }}>
+                      Water
+                    </div>
+                    <div style={{ color: "var(--ink-2)" }}>
+                      {tree.plot.waterSource ?? "—"}
+                    </div>
+                  </div>
                 </div>
-              </div>
-              {district && <Chip>{district.elevation}</Chip>}
-            </div>
-            {district && (
-              <UttarakhandMap
-                pins={[district]}
-                selected={district.id}
-                height={260}
-                compact
-              />
+                {tree.plot.description && (
+                  <div
+                    style={{
+                      marginTop: 12,
+                      padding: "10px 14px",
+                      background:
+                        "color-mix(in oklch, var(--moss-soft) 25%, var(--paper))",
+                      borderRadius: 8,
+                      fontSize: 13,
+                      color: "var(--ink-2)",
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {tree.plot.description}
+                  </div>
+                )}
+              </>
+            ) : (
+              district && (
+                <UttarakhandMap
+                  pins={[district]}
+                  selected={district.id}
+                  height={260}
+                  compact
+                />
+              )
             )}
           </div>
         </div>
