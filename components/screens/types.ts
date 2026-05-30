@@ -4,6 +4,8 @@ export type Screen =
   | "how"
   | "browse"
   | "pick"
+  | "contribute"
+  | "scale"
   | "donor"
   | "farmer"
   | "operator";

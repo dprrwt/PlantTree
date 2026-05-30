@@ -1,5 +1,6 @@
 "use server";
 
+import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -66,7 +67,13 @@ export async function createFarmer(
   if (error) return { error };
 
   const supabase = createAdminClient();
-  const { error: dbError } = await supabase.from("farmers").insert(data);
+  // verify_token is the opaque secret printed on the farmer's charter verify
+  // URL — without it, the slug-style farmer id (e.g. "sunita") would be
+  // trivially enumerable.
+  const verifyToken = randomBytes(6).toString("hex");
+  const { error: dbError } = await supabase
+    .from("farmers")
+    .insert({ ...data, verify_token: verifyToken });
   if (dbError) {
     if (dbError.code === "23505") {
       return { error: `A farmer with id "${data.id}" already exists.` };

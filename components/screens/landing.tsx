@@ -103,7 +103,7 @@ export function Landing({ navigate }: { navigate: (s: Screen) => void }) {
               <button
                 className="btn ghost"
                 onClick={() => {
-                  if (typeof window !== "undefined") window.location.href = "/donor";
+                  if (typeof window !== "undefined") window.location.href = "/groves";
                 }}
               >
                 See a donor&apos;s grove
@@ -1055,8 +1055,20 @@ export function Landing({ navigate }: { navigate: (s: Screen) => void }) {
             </div>
             <div className="col" style={{ gap: 6, fontSize: 13 }}>
               <a className="link">Newsletter</a>
-              <a className="link">If you&apos;re a farmer</a>
-              <a className="link">If you&apos;re a partner</a>
+              <a
+                className="link"
+                style={{ cursor: "pointer" }}
+                onClick={() => navigate("contribute")}
+              >
+                If you&apos;re a farmer
+              </a>
+              <a
+                className="link"
+                style={{ cursor: "pointer" }}
+                onClick={() => navigate("contribute")}
+              >
+                Suggest a plot
+              </a>
               <a className="link">Reach the team</a>
             </div>
           </div>

@@ -4,13 +4,16 @@ import {
   getOperatorTotals,
   getOverdueDonations,
   getPendingDonations,
+  getSubmissions,
   getTreesAwaitingPhoto,
   type OperatorFarmer,
+  type OperatorSubmission,
   type OverdueDonation,
   type PendingDonation,
   type TreeAwaitingPhoto,
 } from "@/lib/db/admin-queries";
 import { rejectDonation, verifyDonation } from "./donations/actions";
+import { dismissSubmission, promoteSubmission } from "./submissions/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -35,13 +38,15 @@ function timeAgo(iso: string) {
 }
 
 export default async function AdminPage() {
-  const [totals, pending, overdue, awaitingPhoto, farmers] = await Promise.all([
-    getOperatorTotals(),
-    getPendingDonations(),
-    getOverdueDonations(),
-    getTreesAwaitingPhoto(14),
-    getAllFarmers(),
-  ]);
+  const [totals, submissions, pending, overdue, awaitingPhoto, farmers] =
+    await Promise.all([
+      getOperatorTotals(),
+      getSubmissions(),
+      getPendingDonations(),
+      getOverdueDonations(),
+      getTreesAwaitingPhoto(14),
+      getAllFarmers(),
+    ]);
 
   return (
     <div style={{ padding: "36px 28px 80px", maxWidth: 1280, margin: "0 auto" }}>
@@ -111,6 +116,27 @@ export default async function AdminPage() {
 
       {/* NEEDS YOUR ATTENTION */}
       <SectionHeader label="needs your attention" />
+
+      <DashSection
+        title="New submissions"
+        subtitle="Plots and farmers contributed from the public form. Review, call to confirm, promote into research."
+        count={submissions.length}
+        tone={submissions.length > 0 ? "terra" : "muted"}
+      >
+        {submissions.length === 0 ? (
+          <EmptyState text="No new submissions." />
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+            {submissions.map((s, i) => (
+              <SubmissionRow
+                key={s.id}
+                s={s}
+                divider={i < submissions.length - 1}
+              />
+            ))}
+          </div>
+        )}
+      </DashSection>
 
       <DashSection
         title="Pending verification"
@@ -489,6 +515,95 @@ function EmptyState({ text }: { text: string }) {
       }}
     >
       {text}
+    </div>
+  );
+}
+
+function SubmissionRow({
+  s,
+  divider,
+}: {
+  s: OperatorSubmission;
+  divider: boolean;
+}) {
+  const addingLabel =
+    s.adding === "both"
+      ? "Plot + farmer"
+      : s.adding === "plot"
+        ? "A plot"
+        : "A farmer";
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "1fr 1.4fr 1.1fr auto",
+        gap: 16,
+        alignItems: "center",
+        padding: "14px 0",
+        borderBottom: divider ? "1px dotted var(--line-2)" : "none",
+      }}
+    >
+      <div>
+        <div style={{ fontFamily: "var(--font-display)", fontSize: 18 }}>
+          {s.by}
+        </div>
+        <div
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: 11,
+            color: "var(--muted)",
+            letterSpacing: "0.04em",
+            marginTop: 2,
+          }}
+        >
+          {s.who} · {s.when} · {s.id}
+        </div>
+      </div>
+      <div>
+        <div style={{ fontSize: 14 }}>
+          {addingLabel} · <strong>{s.village}</strong>, {s.district}
+        </div>
+        <div
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: 11,
+            color: "var(--muted)",
+            marginTop: 2,
+          }}
+        >
+          {s.land ?? "—"}
+          {s.farmer
+            ? ` · farmer: ${s.farmer}${s.agreed === "yes" ? " (agreed)" : " (lead)"}`
+            : ""}
+        </div>
+      </div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+        {s.trust.map((t) => (
+          <span
+            key={t}
+            className="tag"
+            style={{
+              fontSize: 9,
+              color: "var(--moss)",
+              borderColor: "color-mix(in oklch, var(--moss) 50%, var(--line))",
+            }}
+          >
+            ✓ {t}
+          </span>
+        ))}
+      </div>
+      <div style={{ display: "flex", gap: 8 }}>
+        <form action={promoteSubmission.bind(null, s.id)} style={{ display: "inline" }}>
+          <button type="submit" style={actionButtonStyle("moss")}>
+            Promote →
+          </button>
+        </form>
+        <form action={dismissSubmission.bind(null, s.id)} style={{ display: "inline" }}>
+          <button type="submit" style={actionButtonStyle("ghost")}>
+            Dismiss
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

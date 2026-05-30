@@ -18,7 +18,14 @@
       "Bash(git init *)",
       "Bash(git --version)",
       "Bash(npm run *)",
-      "Bash(npx eslint *)"
+      "Bash(npx eslint *)",
+      "WebSearch",
+      "WebFetch(domain:support.claude.com)",
+      "Bash(node -e \"console.log\\(require\\('next/package.json'\\).version\\)\")",
+      "Bash(node -e \"console.log\\(require\\('eslint/package.json'\\).version\\)\")",
+      "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\(JSON.stringify\\(p.scripts,null,2\\)\\)\")",
+      "Bash(ls -R app/certificates app/cert app/receipts)",
+      "Bash(sed -n '1,40p' lib/certificates.ts)"
     ]
   }
 }

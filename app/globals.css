@@ -117,13 +117,15 @@ button { font-family: inherit; cursor: pointer; }
   font-size: 14px;
   color: var(--ink-2);
 }
-.nav-links button {
+.nav-links button, .nav-links a {
   background: none; border: 0; padding: 0;
   color: inherit; font-size: inherit;
   font-family: inherit;
+  text-decoration: none;
+  cursor: pointer;
   position: relative;
 }
-.nav-links button.active::after {
+.nav-links button.active::after, .nav-links a.active::after {
   content: "";
   position: absolute; left: -2px; right: -2px; bottom: -6px;
   height: 2px;
@@ -310,6 +312,52 @@ button { font-family: inherit; cursor: pointer; }
 
 @media (max-width: 900px) {
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+}
+
+/* contribute page — form + sticky verification rail; stacks on mobile */
+.contribute-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 40px;
+  align-items: start;
+}
+.contribute-rail { position: sticky; top: 88px; }
+.contribute-band { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 22px; }
+
+@media (max-width: 900px) {
+  .contribute-grid { grid-template-columns: 1fr; gap: 28px; }
+  .contribute-rail { position: static; }
+  .contribute-band { grid-template-columns: 1fr; gap: 16px; }
+}
+
+/* built-to-scale page — layout helpers (collapse to single column on mobile) */
+.scale-hero { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 56px; align-items: end; }
+.scale-split { display: grid; grid-template-columns: 0.75fr 1.25fr; gap: 48px; align-items: start; }
+.scale-spine { position: absolute; left: 78px; top: 18px; bottom: 18px; width: 2px; background: var(--line-2); }
+.scale-marker {
+  position: absolute; left: 62px; top: 18px;
+  width: 34px; height: 34px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-size: 16px; z-index: 1;
+}
+.scale-phase-body { padding-left: 130px; }
+.scale-band { display: grid; grid-template-columns: auto 1fr; gap: 24px; align-items: center; padding: 22px 28px; }
+.scale-phase-cols { display: grid; grid-template-columns: 1fr 1fr; }
+.scale-phase-col-left { border-right: 1px dashed var(--line-2); }
+.scale-ops-stack { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+.scale-cta { display: grid; grid-template-columns: 1.4fr 1fr; gap: 32px; align-items: center; }
+
+@media (max-width: 900px) {
+  .scale-hero,
+  .scale-split,
+  .scale-phase-cols,
+  .scale-cta { grid-template-columns: 1fr; gap: 28px; }
+  .scale-spine { display: none; }
+  .scale-marker { position: static; margin-bottom: 12px; }
+  .scale-phase-body { padding-left: 0; }
+  .scale-band { grid-template-columns: 1fr; }
+  .scale-phase-col-left { border-right: 0; border-bottom: 1px dashed var(--line-2); }
+  .scale-ops-stack { grid-template-columns: 1fr 1fr; }
 }
 
 /* stat block */

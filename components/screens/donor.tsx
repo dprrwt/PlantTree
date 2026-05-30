@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Chip,
   Ornament,
@@ -13,6 +14,7 @@ import {
 import { MessageBubble, MessageThread } from "@/components/messaging";
 import { PlotLocator } from "@/components/plot";
 import type { DonorGrove, DonorTree } from "@/lib/db/persona-queries";
+import { updateDonorSettings } from "@/app/donor/(authed)/actions";
 
 // Google Maps Search-API format — same URL works on desktop (opens a new tab)
 // and on mobile (deep-links into the Maps app on iOS and Android).
@@ -33,6 +35,21 @@ function formatCoord(value: number, posDir: string, negDir: string): string {
 
 export function Donor({ grove }: { grove: DonorGrove }) {
   const [selectedTreeId, setSelectedTreeId] = useState<string | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
+  const [name, setName] = useState(grove.name);
+  const [isPublic, setIsPublic] = useState(grove.isPublic);
+
+  if (showSettings) {
+    return (
+      <DonorSettings
+        name={name}
+        setName={setName}
+        isPublic={isPublic}
+        setIsPublic={setIsPublic}
+        onBack={() => setShowSettings(false)}
+      />
+    );
+  }
 
   if (selectedTreeId) {
     const tree = grove.trees.find((t) => t.id === selectedTreeId);
@@ -62,7 +79,7 @@ export function Donor({ grove }: { grove: DonorGrove }) {
             Member since {grove.joined}
           </div>
           <h1 style={{ marginBottom: 14 }}>
-            {grove.name}&apos;s <em>trees</em>
+            {name}&apos;s <em>trees</em>
           </h1>
           <p
             style={{
@@ -108,15 +125,12 @@ export function Donor({ grove }: { grove: DonorGrove }) {
             <button>By farmer</button>
             <button>By district</button>
           </div>
-          <span
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: 11,
-              color: "var(--muted)",
-            }}
+          <button
+            className="btn ghost sm"
+            onClick={() => setShowSettings(true)}
           >
-            {grove.trees.length} entries
-          </span>
+            ⚙ Settings
+          </button>
         </div>
         <Link href="/" className="btn moss sm" style={{ textDecoration: "none" }}>
           Plant another <span className="arrow">→</span>
@@ -1086,6 +1100,221 @@ function TreeDetail({ tree, onBack }: { tree: DonorTree; onBack: () => void }) {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+// ---- Donor settings: change display name + make grove public ----
+function DonorSettings({
+  name,
+  setName,
+  isPublic,
+  setIsPublic,
+  onBack,
+}: {
+  name: string;
+  setName: (n: string) => void;
+  isPublic: boolean;
+  setIsPublic: (v: boolean) => void;
+  onBack: () => void;
+}) {
+  const router = useRouter();
+  const [draft, setDraft] = useState(name);
+  const [saved, setSaved] = useState(false);
+  const [savingName, setSavingName] = useState(false);
+  const [togglePending, setTogglePending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function saveName() {
+    const next = draft.trim();
+    if (!next || next === name || savingName) return;
+    setSavingName(true);
+    setError(null);
+    try {
+      const res = await updateDonorSettings({ displayName: next });
+      setName(res.displayName);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 1600);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Couldn't save your name.");
+    } finally {
+      setSavingName(false);
+    }
+  }
+
+  async function togglePublic() {
+    if (togglePending) return;
+    const next = !isPublic;
+    setTogglePending(true);
+    setError(null);
+    // Optimistic — flip immediately, roll back if the write fails.
+    setIsPublic(next);
+    try {
+      const res = await updateDonorSettings({ isPublic: next });
+      setIsPublic(res.isPublic);
+    } catch (e) {
+      setIsPublic(!next);
+      setError(e instanceof Error ? e.message : "Couldn't change visibility.");
+    } finally {
+      setTogglePending(false);
+    }
+  }
+
+  return (
+    <div
+      className="shell"
+      style={{ paddingTop: 36, paddingBottom: 80, maxWidth: 720 }}
+    >
+      <button className="btn ghost sm" onClick={onBack} style={{ marginBottom: 22 }}>
+        ← Back to my trees
+      </button>
+      <div className="eyebrow" style={{ marginBottom: 12 }}>
+        Settings
+      </div>
+      <h1 style={{ marginBottom: 28 }}>
+        Your <em>account</em>
+      </h1>
+
+      {/* Name */}
+      <div className="card frame" style={{ padding: 24, marginBottom: 18 }}>
+        <div className="eyebrow" style={{ marginBottom: 6 }}>
+          Display name
+        </div>
+        <p
+          style={{
+            margin: "0 0 14px",
+            color: "var(--ink-2)",
+            fontSize: 14,
+            lineHeight: 1.55,
+          }}
+        >
+          Shown on your tree pages, your certificates, and — if your grove is
+          public — in the registry.
+        </p>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <input
+            className="input"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            style={{ flex: 1, minWidth: 200 }}
+            placeholder="Your name"
+          />
+          <button
+            className="btn"
+            onClick={saveName}
+            disabled={!draft.trim() || draft.trim() === name || savingName}
+            style={{
+              opacity:
+                !draft.trim() || draft.trim() === name || savingName ? 0.5 : 1,
+            }}
+          >
+            {saved ? "✓ Saved" : savingName ? "Saving…" : "Save"}
+          </button>
+        </div>
+      </div>
+
+      {/* Public toggle */}
+      <div className="card frame" style={{ padding: 24 }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            gap: 16,
+          }}
+        >
+          <div style={{ flex: 1 }}>
+            <div className="eyebrow" style={{ marginBottom: 6 }}>
+              Make my grove public
+            </div>
+            <p
+              style={{
+                margin: 0,
+                color: "var(--ink-2)",
+                fontSize: 14,
+                lineHeight: 1.55,
+              }}
+            >
+              When on, your grove appears in the public registry on
+              planttree.life — anyone can open it and see your trees (species,
+              district, growth), but never your contact details, receipts, or
+              messages.
+            </p>
+          </div>
+          <button
+            onClick={togglePublic}
+            role="switch"
+            aria-checked={isPublic}
+            disabled={togglePending}
+            style={{
+              flexShrink: 0,
+              width: 54,
+              height: 30,
+              borderRadius: 999,
+              border: 0,
+              cursor: togglePending ? "wait" : "pointer",
+              background: isPublic ? "var(--moss)" : "var(--line-2)",
+              position: "relative",
+              transition: "background 0.2s ease",
+            }}
+          >
+            <span
+              style={{
+                position: "absolute",
+                top: 3,
+                left: isPublic ? 27 : 3,
+                width: 24,
+                height: 24,
+                borderRadius: "50%",
+                background: "var(--paper)",
+                transition: "left 0.2s ease",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+              }}
+            ></span>
+          </button>
+        </div>
+        <div
+          style={{
+            marginTop: 16,
+            padding: "10px 14px",
+            borderRadius: 8,
+            fontSize: 13,
+            fontFamily: "var(--font-mono)",
+            letterSpacing: "0.03em",
+            background: isPublic
+              ? "color-mix(in oklch, var(--moss-soft) 30%, var(--paper))"
+              : "var(--paper-2)",
+            color: isPublic ? "var(--moss)" : "var(--muted)",
+          }}
+        >
+          {isPublic
+            ? `✓ Public — your grove shows in the registry as “${name}”.`
+            : "○ Private — only you can see your grove."}
+        </div>
+        {isPublic && (
+          <button
+            className="btn ghost sm"
+            style={{ marginTop: 14 }}
+            onClick={() => router.push("/groves")}
+          >
+            View the public registry <span className="arrow">→</span>
+          </button>
+        )}
+      </div>
+
+      {error && (
+        <div
+          style={{
+            marginTop: 14,
+            color: "var(--terra)",
+            fontFamily: "var(--font-mono)",
+            fontSize: 11,
+            letterSpacing: "0.04em",
+          }}
+        >
+          {error}
+        </div>
+      )}
     </div>
   );
 }

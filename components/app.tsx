@@ -6,6 +6,8 @@ import { Landing } from "./screens/landing";
 import { Where } from "./screens/where";
 import { How } from "./screens/how";
 import { Picker } from "./screens/picker";
+import { Contribute } from "./screens/contribute";
+import { Scale } from "./screens/scale";
 import {
   TweakButton,
   TweakRadio,
@@ -160,6 +162,18 @@ function TopBar({
               >
                 Farmers
               </button>
+              <button
+                onClick={() => navigate("contribute")}
+                className={screen === "contribute" ? "active" : ""}
+              >
+                Contribute
+              </button>
+              <button
+                onClick={() => navigate("scale")}
+                className={screen === "scale" ? "active" : ""}
+              >
+                Built to scale
+              </button>
             </>
           )}
         </div>
@@ -254,6 +268,8 @@ export function App() {
       {(screen === "browse" || screen === "pick") && (
         <Picker navigate={navigate} />
       )}
+      {screen === "contribute" && <Contribute navigate={navigate} />}
+      {screen === "scale" && <Scale navigate={navigate} />}
 
       <TweaksPanel title="Tweaks">
         <TweakSection title="Palette" subtitle="Tonal direction for the whole site">
@@ -339,6 +355,24 @@ export function App() {
             }}
           >
             Farmers
+          </TweakButton>
+          <div style={{ height: 6 }}></div>
+          <TweakButton
+            onClick={() => {
+              setRole("visitor");
+              navigate("contribute");
+            }}
+          >
+            Contribute
+          </TweakButton>
+          <div style={{ height: 6 }}></div>
+          <TweakButton
+            onClick={() => {
+              setRole("visitor");
+              navigate("scale");
+            }}
+          >
+            Built to scale
           </TweakButton>
           <div style={{ height: 6 }}></div>
           <TweakButton

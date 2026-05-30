@@ -12,6 +12,7 @@ import {
 } from "@/components/shared";
 import { MessageThread } from "@/components/messaging";
 import { PlotCard } from "@/components/plot";
+import { FarmerVerifiedCard } from "@/components/farmer-verified-card";
 import { type District, type Farmer, type Plot, type Thread } from "@/lib/data";
 import { useDistricts, useFarmers, usePlots } from "@/lib/db/hooks";
 import { submitDonation } from "@/app/donate/actions";
@@ -634,50 +635,12 @@ function FarmerProfile({
             </div>
           </div>
 
-          <div
-            className="card"
-            style={{
-              marginTop: 28,
-              padding: 18,
-              display: "flex",
-              gap: 14,
-              alignItems: "center",
-            }}
-          >
-            <div
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: "50%",
-                background: "var(--moss-soft)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "var(--moss)",
-                fontSize: 22,
-              }}
-            >
-              ✓
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontFamily: "var(--font-display)", fontSize: 18 }}>
-                Verified introduction
-              </div>
-              <div style={{ fontSize: 13, color: "var(--muted)" }}>
-                {farmer.verifiedBy}
-              </div>
-            </div>
-            <div
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: 10,
-                color: "var(--muted)",
-                letterSpacing: "0.06em",
-                textTransform: "uppercase",
-              }}
-            >
-              site visited · Feb 2026
-            </div>
+          <div style={{ marginTop: 28 }}>
+            <Ornament
+              label={`${farmer.name.split(" ")[0]}-ji's charter · verified planter`}
+            />
+            <div style={{ height: 16 }}></div>
+            <FarmerVerifiedCard farmer={farmer} plots={plots} />
           </div>
         </div>
 

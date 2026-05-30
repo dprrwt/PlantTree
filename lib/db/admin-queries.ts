@@ -3,6 +3,68 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 
+export interface OperatorSubmission {
+  id: string;
+  by: string;
+  who: string; // resident | farmer | NGO | panchayat | other (display)
+  when: string;
+  adding: "plot" | "farmer" | "both";
+  district: string;
+  village: string;
+  land: string | null;
+  farmer: string | null;
+  agreed: string | null;
+  trust: string[];
+}
+
+const SUBMITTER_LABEL: Record<string, string> = {
+  resident: "Local resident",
+  farmer: "The farmer",
+  ngo: "NGO / foundation",
+  panchayat: "Panchayat",
+  other: "Other",
+};
+
+function submissionTimeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins} min ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} hr ago`;
+  const days = Math.floor(hours / 24);
+  return `${days} day${days === 1 ? "" : "s"} ago`;
+}
+
+// New submissions from the public /contribute form. status='new' only.
+export async function getSubmissions(): Promise<OperatorSubmission[]> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("submissions")
+    .select(
+      "id, contributor_type, contributor_name, adding, district, village, land_state, land_size, farmer_name, farmer_agreed, trust, created_at",
+    )
+    .eq("status", "new")
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+
+  return (data ?? []).map((row: any) => ({
+    id: row.id,
+    by: row.contributor_name ?? "—",
+    who: SUBMITTER_LABEL[row.contributor_type] ?? row.contributor_type ?? "—",
+    when: submissionTimeAgo(row.created_at),
+    adding: row.adding,
+    district: row.district ?? "—",
+    village: row.village ?? "—",
+    land:
+      [row.land_state, row.land_size].filter(Boolean).join(" · ") || null,
+    farmer: row.farmer_name ?? null,
+    agreed: row.farmer_agreed ?? null,
+    trust: row.trust ?? [],
+  }));
+}
+
 export interface OperatorTotals {
   farmers: number;
   trees: number;

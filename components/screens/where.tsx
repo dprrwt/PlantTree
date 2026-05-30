@@ -159,7 +159,11 @@ export function Where({ navigate }: { navigate: (s: Screen) => void }) {
               <span style={{ color: "var(--moss)" }}>planting</span> as we meet
               the farmers and find seedling stock.
             </div>
-            <button className="btn ghost sm" style={{ marginTop: 16 }}>
+            <button
+              className="btn ghost sm"
+              style={{ marginTop: 16 }}
+              onClick={() => navigate("contribute")}
+            >
               Know a plot that needs trees? <span className="arrow">→</span>
             </button>
           </div>
@@ -908,7 +912,10 @@ export function Where({ navigate }: { navigate: (s: Screen) => void }) {
             </strong>{" "}
             Tell us — we&apos;ll add it to the list and start the conversation.
           </div>
-          <button className="btn moss sm">
+          <button
+            className="btn moss sm"
+            onClick={() => navigate("contribute")}
+          >
             Suggest a plot <span className="arrow">→</span>
           </button>
         </div>

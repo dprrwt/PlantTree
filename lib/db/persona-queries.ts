@@ -223,6 +223,7 @@ export interface DonorGrove {
   };
   name: string;        // mirrors existing Grove.name for screen compatibility
   joined: string;      // mirrors existing Grove.joined
+  isPublic: boolean;   // grove shows in the public registry when true
   total: number;
   totalPaid: number;
   trees: DonorTree[];
@@ -235,7 +236,7 @@ export async function getDonorGrove(
 
   const { data: donor, error: donorError } = await supabase
     .from("donors")
-    .select("id, display_name, joined_at, city, is_anonymous")
+    .select("id, display_name, joined_at, city, is_anonymous, is_public")
     .eq("id", donorId)
     .is("deleted_at", null)
     .maybeSingle();
@@ -345,6 +346,7 @@ export async function getDonorGrove(
     },
     name: donorName,
     joined,
+    isPublic: !!donor.is_public,
     total: trees.length,
     totalPaid,
     trees,
