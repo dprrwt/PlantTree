@@ -128,7 +128,7 @@ function rowToDistrict(r: any): District {
   };
 }
 
-function rowToMessage(r: any): Message {
+function rowToMessage(r: any, photoUrl?: string): Message {
   return {
     id: r.id,
     from: r.from_role,
@@ -137,21 +137,68 @@ function rowToMessage(r: any): Message {
     text: r.text_en ?? r.text_original ?? undefined,
     caption: r.caption_en ?? r.caption_original ?? undefined,
     photoTone: r.photo_tone ?? undefined,
+    photoUrl,
   };
 }
 
-function rowsToThread(treeId: string, farmerId: string, donorName: string, rows: any[]): Thread {
+// payment-proofs is a private storage bucket — to render the image in <img>
+// tags in donor/farmer/operator views, we need short-lived signed URLs. One
+// hour is plenty for a server-rendered page; the page reloads on navigation.
+const PROOF_SIGN_TTL_SECONDS = 3600;
+
+async function signProofUrls(
+  rows: any[],
+): Promise<Map<string, string>> {
+  const keys = Array.from(
+    new Set(
+      rows
+        .filter((r) => r.kind === "payment-proof" && r.photo_key)
+        .map((r) => r.photo_key as string),
+    ),
+  );
+  if (keys.length === 0) return new Map();
+
+  const supabase = createAdminClient();
+  const { data } = await supabase.storage
+    .from("payment-proofs")
+    .createSignedUrls(keys, PROOF_SIGN_TTL_SECONDS);
+
+  const m = new Map<string, string>();
+  data?.forEach((entry, i) => {
+    if (entry.signedUrl) m.set(keys[i], entry.signedUrl);
+  });
+  return m;
+}
+
+async function rowsToThread(
+  treeId: string,
+  farmerId: string,
+  donorName: string,
+  rows: any[],
+): Promise<Thread> {
+  const sorted = [...rows].sort(
+    (a, b) =>
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+  );
+  const proofUrls = await signProofUrls(sorted);
+  const supabase = createAdminClient();
   return {
     treeId,
     donor: donorName,
     farmerId,
-    messages: [...rows]
-      .sort(
-        (a, b) =>
-          new Date(a.created_at).getTime() -
-          new Date(b.created_at).getTime(),
-      )
-      .map(rowToMessage),
+    messages: sorted.map((r) => {
+      let photoUrl: string | undefined;
+      if (r.photo_key) {
+        if (r.kind === "payment-proof") {
+          photoUrl = proofUrls.get(r.photo_key);
+        } else if (r.kind === "photo") {
+          photoUrl = supabase.storage
+            .from("tree-photos")
+            .getPublicUrl(r.photo_key).data.publicUrl;
+        }
+      }
+      return rowToMessage(r, photoUrl);
+    }),
   };
 }
 
@@ -217,59 +264,73 @@ export async function getDonorGrove(
 
   const donorName = donor.is_anonymous ? "Anonymous" : donor.display_name;
 
-  const trees: DonorTree[] = (rawTrees ?? []).map((t: any) => {
-    const donation = (t.donations ?? []).find(
-      (d: any) => d.status !== "refunded" && d.status !== "rejected",
-    );
-    const paid = donation?.amount_inr ?? 0;
+  const trees: DonorTree[] = await Promise.all(
+    (rawTrees ?? []).map(async (t: any): Promise<DonorTree> => {
+      const donation = (t.donations ?? []).find(
+        (d: any) => d.status !== "refunded" && d.status !== "rejected",
+      );
+      const paid = donation?.amount_inr ?? 0;
 
-    const photos: TreePhoto[] = [...(t.tree_updates ?? [])]
-      .sort(
-        (a, b) =>
-          new Date(a.created_at).getTime() -
-          new Date(b.created_at).getTime(),
-      )
-      .map((tu: any) => ({
-        date: formatShortDate(tu.created_at),
-        caption: tu.caption_en ?? tu.caption_original ?? "",
-        by: t.farmer?.id ?? "",
-      }));
+      const photoBucket = createAdminClient().storage.from("tree-photos");
+      // Newest first — matches the farmer's "Your updates so far" strip and
+      // gives the donor "what's new on my tree?" at-a-glance instead of
+      // scrolling to the right edge for the latest.
+      const photos: TreePhoto[] = [...(t.tree_updates ?? [])]
+        .sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() -
+            new Date(a.created_at).getTime(),
+        )
+        .map((tu: any) => ({
+          date: formatShortDate(tu.created_at),
+          caption: tu.caption_en ?? tu.caption_original ?? "",
+          by: t.farmer?.id ?? "",
+          photoUrl: tu.photo_key
+            ? photoBucket.getPublicUrl(tu.photo_key).data.publicUrl
+            : undefined,
+        }));
 
-    const milestones: TreeMilestone[] = [...(t.milestones ?? [])]
-      .sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
-      .map((m: any) => ({
-        date: m.target_date ?? "",
-        label: m.label,
-        done: !!m.done_at,
-        by: m.done_at ? t.farmer?.id ?? undefined : undefined,
-      }));
+      const milestones: TreeMilestone[] = [...(t.milestones ?? [])]
+        .sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+        .map((m: any) => ({
+          date: m.target_date ?? "",
+          label: m.label,
+          done: !!m.done_at,
+          by: m.done_at ? t.farmer?.id ?? undefined : undefined,
+        }));
 
-    const thread: Thread | null =
-      (t.messages ?? []).length > 0
-        ? rowsToThread(t.id, t.farmer?.id ?? "", donorName, t.messages)
-        : null;
+      const thread: Thread | null =
+        (t.messages ?? []).length > 0
+          ? await rowsToThread(
+              t.id,
+              t.farmer?.id ?? "",
+              donorName,
+              t.messages,
+            )
+          : null;
 
-    return {
-      id: t.id,
-      species: t.species,
-      sci: t.scientific_name,
-      farmerId: t.farmer_id,
-      districtId: t.district_id,
-      plotId: t.plot_id ?? undefined,
-      planted: t.planted_at ?? "",
-      paid,
-      stage: t.stage as 0 | 1 | 2 | 3 | 4,
-      height: Number(t.height_m ?? 0),
-      health: Number(t.health_pct ?? 0),
-      lastUpdate: formatRelative(t.last_update_at),
-      photos,
-      milestones,
-      farmer: rowToFarmer(t.farmer),
-      district: rowToDistrict(t.district),
-      plot: t.plot ? rowToPlot(t.plot as PlotRow) : null,
-      thread,
-    };
-  });
+      return {
+        id: t.id,
+        species: t.species,
+        sci: t.scientific_name,
+        farmerId: t.farmer_id,
+        districtId: t.district_id,
+        plotId: t.plot_id ?? undefined,
+        planted: t.planted_at ?? "",
+        paid,
+        stage: t.stage as 0 | 1 | 2 | 3 | 4,
+        height: Number(t.height_m ?? 0),
+        health: Number(t.health_pct ?? 0),
+        lastUpdate: formatRelative(t.last_update_at),
+        photos,
+        milestones,
+        farmer: rowToFarmer(t.farmer),
+        district: rowToDistrict(t.district),
+        plot: t.plot ? rowToPlot(t.plot as PlotRow) : null,
+        thread,
+      };
+    }),
+  );
 
   const joined = formatJoined(donor.joined_at);
   const totalPaid = trees.reduce((sum, t) => sum + (t.paid ?? 0), 0);
@@ -360,6 +421,7 @@ export async function getFarmerWorkspace(
     .select(`
       id, species, planted_at, height_m, health_pct, last_update_at,
       donor:donors!donor_id (display_name, is_anonymous),
+      tree_updates (id, photo_key, caption_en, caption_original, height_m, health_pct, created_at, posted_by),
       messages (id, from_role, kind, text_en, text_original, caption_en, caption_original, photo_tone, photo_key, created_at)
     `)
     .eq("farmer_id", farmerId)
@@ -370,6 +432,7 @@ export async function getFarmerWorkspace(
 
   const fourteenDaysAgo = Date.now() - 14 * 86400000;
 
+  const farmerPhotoBucket = supabase.storage.from("tree-photos");
   const trees: FarmerTree[] = (treeRows ?? []).map((t: any) => {
     const donorDisplay = t.donor
       ? t.donor.is_anonymous
@@ -382,6 +445,21 @@ export async function getFarmerWorkspace(
       (t.last_update_at === null ||
         new Date(t.last_update_at).getTime() < fourteenDaysAgo);
 
+    const photos = [...(t.tree_updates ?? [])]
+      .sort(
+        (a: any, b: any) =>
+          new Date(b.created_at).getTime() -
+          new Date(a.created_at).getTime(),
+      )
+      .map((tu: any) => ({
+        date: formatShortDate(tu.created_at),
+        caption: tu.caption_en ?? tu.caption_original ?? "",
+        by: farmerId,
+        photoUrl: tu.photo_key
+          ? farmerPhotoBucket.getPublicUrl(tu.photo_key).data.publicUrl
+          : undefined,
+      }));
+
     return {
       id: t.id,
       donor: donorDisplay,
@@ -393,6 +471,7 @@ export async function getFarmerWorkspace(
       unread: 0,
       needsUpdate: needsUpdate || undefined,
       awaitingPlant: awaitingPlant || undefined,
+      photos: photos.length > 0 ? photos : undefined,
     };
   });
 
@@ -421,28 +500,35 @@ export async function getFarmerWorkspace(
     kind: TIER_TO_KIND[d.tier] ?? "plant only",
   }));
 
-  const threadPreviews: FarmerThreadPreview[] = (treeRows ?? [])
-    .filter((t: any) => (t.messages ?? []).length > 0)
-    .map((t: any) => {
-      const donorName = t.donor
-        ? t.donor.is_anonymous
-          ? "Anonymous"
-          : t.donor.display_name
-        : "—";
-      const thread = rowsToThread(t.id, farmerId, donorName, t.messages);
-      const lastMessageAt =
-        thread.messages.length > 0
-          ? thread.messages[thread.messages.length - 1].time
-          : "";
-      return {
-        treeId: t.id,
-        treeSpecies: t.species,
-        donorName,
-        lastMessageAt,
-        unread: 0,
-        thread,
-      };
-    });
+  const threadPreviews: FarmerThreadPreview[] = await Promise.all(
+    (treeRows ?? [])
+      .filter((t: any) => (t.messages ?? []).length > 0)
+      .map(async (t: any): Promise<FarmerThreadPreview> => {
+        const donorName = t.donor
+          ? t.donor.is_anonymous
+            ? "Anonymous"
+            : t.donor.display_name
+          : "—";
+        const thread = await rowsToThread(
+          t.id,
+          farmerId,
+          donorName,
+          t.messages,
+        );
+        const lastMessageAt =
+          thread.messages.length > 0
+            ? thread.messages[thread.messages.length - 1].time
+            : "";
+        return {
+          treeId: t.id,
+          treeSpecies: t.species,
+          donorName,
+          lastMessageAt,
+          unread: 0,
+          thread,
+        };
+      }),
+  );
 
   const pendingUpdates = trees.filter((t) => t.needsUpdate || t.awaitingPlant)
     .length;
@@ -494,5 +580,5 @@ export async function getThread(treeId: string): Promise<Thread | null> {
       : donorRel.display_name
     : "—";
 
-  return rowsToThread(treeId, tree.farmer_id, donorName, rows ?? []);
+  return await rowsToThread(treeId, tree.farmer_id, donorName, rows ?? []);
 }

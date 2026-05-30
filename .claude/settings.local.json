@@ -16,7 +16,9 @@
       "Bash(ls '/c/Users/user/.claude/projects/h--CodingWorkspace-1-Working-PlantTree/memory/' 2>&1)",
       "Read(//c/Users/user/.claude/projects/h--CodingWorkspace-1-Working-PlantTree/**)",
       "Bash(git init *)",
-      "Bash(git --version)"
+      "Bash(git --version)",
+      "Bash(npm run *)",
+      "Bash(npx eslint *)"
     ]
   }
 }

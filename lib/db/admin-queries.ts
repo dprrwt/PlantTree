@@ -45,6 +45,7 @@ export interface PendingDonation {
   tier: "plant_only" | "plant_care" | "grove_of_5";
   paymentMethod: string;
   paymentProofKey: string | null;
+  paymentProofUrl: string | null;
   paymentRef: string | null;
   createdAt: string;
   isAnonymous: boolean;
@@ -70,12 +71,30 @@ export async function getPendingDonations(): Promise<PendingDonation[]> {
 
   if (error) throw error;
 
+  // Sign URLs for the proof screenshots in one batch — the operator clicks
+  // through these to verify and we want a thumbnail visible on the row.
+  const proofKeys = (data ?? [])
+    .map((r: any) => r.payment_proof_key as string | null)
+    .filter((k): k is string => !!k);
+  const proofUrlMap = new Map<string, string>();
+  if (proofKeys.length > 0) {
+    const { data: signed } = await supabase.storage
+      .from("payment-proofs")
+      .createSignedUrls(proofKeys, 3600);
+    signed?.forEach((entry, i) => {
+      if (entry.signedUrl) proofUrlMap.set(proofKeys[i], entry.signedUrl);
+    });
+  }
+
   return (data ?? []).map((row: any) => ({
     id: row.id,
     amountInr: row.amount_inr,
     tier: row.tier,
     paymentMethod: row.payment_method,
     paymentProofKey: row.payment_proof_key,
+    paymentProofUrl: row.payment_proof_key
+      ? proofUrlMap.get(row.payment_proof_key) ?? null
+      : null,
     paymentRef: row.payment_ref,
     createdAt: row.created_at,
     isAnonymous: row.is_anonymous,

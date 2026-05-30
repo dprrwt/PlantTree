@@ -508,6 +508,32 @@ body.theme-dark {
 }
 .hscroll::-webkit-scrollbar { display: none; }
 
+/* scroll: thin themed scrollbar for content strips where we want the
+   scrollability to be visible (photo strips on donor + farmer pages). */
+.scroll-pretty {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklch, var(--moss) 60%, transparent) transparent;
+}
+.scroll-pretty::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+.scroll-pretty::-webkit-scrollbar-track {
+  background: color-mix(in oklch, var(--paper-2) 70%, transparent);
+  border-radius: 999px;
+}
+.scroll-pretty::-webkit-scrollbar-thumb {
+  background: color-mix(in oklch, var(--moss) 50%, transparent);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.scroll-pretty::-webkit-scrollbar-thumb:hover {
+  background: var(--moss);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+}
+
 /* ---------- tweaks panel (design exploration only) ---------- */
 .twk-fab {
   position: fixed; right: 16px; bottom: 16px; z-index: 2147483645;

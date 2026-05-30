@@ -1,5 +1,6 @@
 "use server";
 
+import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireOperator } from "@/lib/auth";
@@ -48,8 +49,8 @@ export async function verifyDonation(donationId: string): Promise<void> {
   const { data: donation, error: donationErr } = await supabase
     .from("donations")
     .select(`
-      id, donor_id, farmer_id, amount_inr, tier, status,
-      donor:donors!donor_id (display_name, is_anonymous),
+      id, donor_id, farmer_id, amount_inr, tier, status, payment_proof_key,
+      donor:donors!donor_id (display_name, is_anonymous, email),
       farmer:farmers!farmer_id (id, name, plants, district_id)
     `)
     .eq("id", donationId)
@@ -84,7 +85,10 @@ export async function verifyDonation(donationId: string): Promise<void> {
   const scientificName = SCIENTIFIC_NAMES[species] ?? "—";
   const treeId = await nextTreeId();
 
-  // Create the tree
+  // Create the tree. verify_token is the opaque secret printed on the cert
+  // + receipt verify URLs — without it third parties can't pull the public
+  // verification page for this tree.
+  const verifyToken = randomBytes(6).toString("hex");
   const { error: treeErr } = await supabase.from("trees").insert({
     id: treeId,
     species,
@@ -98,6 +102,7 @@ export async function verifyDonation(donationId: string): Promise<void> {
     height_m: 0,
     health_pct: null,
     visibility: "public",
+    verify_token: verifyToken,
   });
   if (treeErr) throw treeErr;
 
@@ -128,6 +133,20 @@ export async function verifyDonation(donationId: string): Promise<void> {
   });
   if (msgErr) throw msgErr;
 
+  // Forward the payment screenshot into the thread so the donor (after auth)
+  // and the farmer both see it the moment the thread becomes visible.
+  if (donation.payment_proof_key) {
+    const { error: proofMsgErr } = await supabase.from("messages").insert({
+      tree_id: treeId,
+      from_role: "donor",
+      kind: "payment-proof",
+      text_en: "Payment screenshot",
+      text_lang: "en",
+      photo_key: donation.payment_proof_key,
+    });
+    if (proofMsgErr) throw proofMsgErr;
+  }
+
   // Audit log
   await supabase.from("donation_events").insert({
     donation_id: donationId,
@@ -137,8 +156,107 @@ export async function verifyDonation(donationId: string): Promise<void> {
     note: `Verified · created tree ${treeId} on plot ${plotId}, species "${species}"`,
   });
 
+  // Provision donor login (best-effort; doesn't fail verification if email is
+  // missing or Supabase rejects the request).
+  const donorEmail = (donor?.email as string | null) ?? null;
+  const provisionResult = await provisionDonorAuth(
+    donation.donor_id,
+    donorEmail,
+  );
+  if (provisionResult.note) {
+    await supabase.from("donation_events").insert({
+      donation_id: donationId,
+      from_status: "awaiting_plant",
+      to_status: "awaiting_plant",
+      actor_user_id: profile.user_id,
+      note: `Donor auth: ${provisionResult.note}`,
+    });
+  }
+
   revalidatePath("/admin");
   revalidatePath("/admin/farmers");
+}
+
+// Provisions a Supabase auth account for the donor and emails them an
+// invitation so they can set their first password and access /donor.
+// Idempotent — safe to run twice for the same donor.
+async function provisionDonorAuth(
+  donorId: string,
+  email: string | null,
+): Promise<{ ok: boolean; note: string }> {
+  if (!email) {
+    return {
+      ok: false,
+      note: "no email on donor row — donor can't be auto-provisioned",
+    };
+  }
+
+  const supabase = createAdminClient();
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const redirectTo = `${siteUrl}/auth/callback?next=/donor/set-password`;
+  const lowerEmail = email.toLowerCase();
+
+  // Does a user with this email already exist?
+  let userId: string | null = null;
+  try {
+    const { data: listed } = await supabase.auth.admin.listUsers();
+    const existing = listed.users?.find(
+      (u) => (u.email ?? "").toLowerCase() === lowerEmail,
+    );
+    if (existing) userId = existing.id;
+  } catch {
+    // fall through; we'll try the invite path below
+  }
+
+  let action: "invited" | "relinked";
+  if (!userId) {
+    // First-time donor — invite (creates user + sends a Supabase invitation email).
+    const { data: invited, error: inviteErr } =
+      await supabase.auth.admin.inviteUserByEmail(email, {
+        redirectTo,
+        data: { donor_id: donorId },
+      });
+    if (inviteErr) {
+      return { ok: false, note: `inviteUserByEmail failed: ${inviteErr.message}` };
+    }
+    userId = invited.user?.id ?? null;
+    if (!userId) return { ok: false, note: "invite returned no user id" };
+    action = "invited";
+  } else {
+    // Existing account — just relink to the new donor row, no email.
+    action = "relinked";
+  }
+
+  // Link the donor row to the auth user.
+  await supabase
+    .from("donors")
+    .update({ auth_user_id: userId })
+    .eq("id", donorId);
+
+  // Insert profile (if missing).
+  const { data: existingProfile } = await supabase
+    .from("profiles")
+    .select("user_id, role, donor_id")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (!existingProfile) {
+    const { error: profileErr } = await supabase.from("profiles").insert({
+      user_id: userId,
+      role: "donor",
+      donor_id: donorId,
+    });
+    if (profileErr) {
+      return {
+        ok: false,
+        note: `account ready but profile insert failed: ${profileErr.message}`,
+      };
+    }
+  }
+
+  return action === "invited"
+    ? { ok: true, note: `invitation email sent to ${email}` }
+    : { ok: true, note: `relinked existing account ${email} to this donor row` };
 }
 
 export async function rejectDonation(donationId: string): Promise<void> {

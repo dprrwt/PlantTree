@@ -5,7 +5,9 @@ import {
   getFarmerById,
 } from "@/lib/db/admin-queries";
 import { FarmerForm } from "../../_components/farmer-form";
+import { FarmerLoginPanel } from "../../_components/farmer-login-panel";
 import { updateFarmer } from "../../actions";
+import { getFarmerLoginStatus } from "../../login-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -15,9 +17,10 @@ export default async function EditFarmerPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [farmer, districts] = await Promise.all([
+  const [farmer, districts, loginStatus] = await Promise.all([
     getFarmerById(id),
     getAllDistrictsForSelect(),
+    getFarmerLoginStatus(id),
   ]);
 
   if (!farmer) notFound();
@@ -66,6 +69,11 @@ export default async function EditFarmerPage({
         can&apos;t be renamed — create a new farmer + delete the old one if you
         really need a different slug.
       </p>
+      <FarmerLoginPanel
+        farmerId={farmer.id}
+        farmerName={farmer.name}
+        status={loginStatus}
+      />
       <FarmerForm
         action={boundUpdate}
         districts={districts}

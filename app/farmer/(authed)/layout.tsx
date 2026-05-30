@@ -1,12 +1,21 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Logo } from "@/components/shared";
+import { getCurrentUser, requireFarmer } from "@/lib/auth";
 
 export const metadata = {
-  title: "Your grove · PlantTree.life",
+  title: "Your workspace · PlantTree.life",
 };
 
-export default function DonorLayout({ children }: { children: ReactNode }) {
+export default async function FarmerLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  // Gate the whole subtree; redirects to /farmer/login if not a farmer session.
+  await requireFarmer();
+  const user = await getCurrentUser();
+
   return (
     <div>
       <div className="topbar">
@@ -22,26 +31,16 @@ export default function DonorLayout({ children }: { children: ReactNode }) {
             style={{
               fontFamily: "var(--font-mono)",
               fontSize: 10,
-              color: "var(--moss)",
+              color: "var(--terra)",
               letterSpacing: "0.12em",
               textTransform: "uppercase",
-              border: "1px solid var(--moss)",
+              border: "1px solid var(--terra)",
               padding: "2px 8px",
               borderRadius: 4,
             }}
           >
-            your grove
+            your workspace
           </span>
-          <Link
-            href="/"
-            style={{
-              fontSize: 13,
-              color: "var(--ink-2)",
-              textDecoration: "none",
-            }}
-          >
-            Plant another →
-          </Link>
           <span
             style={{
               marginLeft: "auto",
@@ -50,8 +49,20 @@ export default function DonorLayout({ children }: { children: ReactNode }) {
               color: "var(--muted)",
             }}
           >
-            signed in as <strong>donor</strong>
+            {user?.email ?? "farmer"}
           </span>
+          <Link
+            href="/farmer/logout"
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: 11,
+              color: "var(--terra)",
+              textDecoration: "none",
+              letterSpacing: "0.04em",
+            }}
+          >
+            sign out →
+          </Link>
         </div>
       </div>
       {children}

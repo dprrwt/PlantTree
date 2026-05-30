@@ -1,12 +1,20 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Logo } from "@/components/shared";
+import { getCurrentUser, requireDonor } from "@/lib/auth";
 
 export const metadata = {
-  title: "Your workspace · PlantTree.life",
+  title: "Your grove · PlantTree.life",
 };
 
-export default function FarmerLayout({ children }: { children: ReactNode }) {
+export default async function DonorLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  await requireDonor();
+  const user = await getCurrentUser();
+
   return (
     <div>
       <div className="topbar">
@@ -22,16 +30,26 @@ export default function FarmerLayout({ children }: { children: ReactNode }) {
             style={{
               fontFamily: "var(--font-mono)",
               fontSize: 10,
-              color: "var(--terra)",
+              color: "var(--moss)",
               letterSpacing: "0.12em",
               textTransform: "uppercase",
-              border: "1px solid var(--terra)",
+              border: "1px solid var(--moss)",
               padding: "2px 8px",
               borderRadius: 4,
             }}
           >
-            your workspace
+            your grove
           </span>
+          <Link
+            href="/"
+            style={{
+              fontSize: 13,
+              color: "var(--ink-2)",
+              textDecoration: "none",
+            }}
+          >
+            Plant another →
+          </Link>
           <span
             style={{
               marginLeft: "auto",
@@ -40,8 +58,20 @@ export default function FarmerLayout({ children }: { children: ReactNode }) {
               color: "var(--muted)",
             }}
           >
-            signed in as <strong>farmer</strong>
+            {user?.email ?? "donor"}
           </span>
+          <Link
+            href="/donor/logout"
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: 11,
+              color: "var(--terra)",
+              textDecoration: "none",
+              letterSpacing: "0.04em",
+            }}
+          >
+            sign out →
+          </Link>
         </div>
       </div>
       {children}

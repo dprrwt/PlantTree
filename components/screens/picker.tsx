@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Chip,
   Ornament,
@@ -15,6 +15,7 @@ import { PlotCard } from "@/components/plot";
 import { type District, type Farmer, type Plot, type Thread } from "@/lib/data";
 import { useDistricts, useFarmers, usePlots } from "@/lib/db/hooks";
 import { submitDonation } from "@/app/donate/actions";
+import { compressImage } from "@/lib/image-compress";
 import type { Screen } from "./types";
 
 type PickerStep = "list" | "profile" | "pay" | "success";
@@ -29,6 +30,10 @@ export function Picker({ navigate }: { navigate: (s: Screen) => void }) {
   const [donorName, setDonorName] = useState("");
   const [donorEmail, setDonorEmail] = useState("");
   const [donorPhone, setDonorPhone] = useState("");
+  const [isAnonymous, setIsAnonymous] = useState(false);
+  const [proofFile, setProofFile] = useState<File | null>(null);
+  const [proofPreviewUrl, setProofPreviewUrl] = useState<string | null>(null);
+  const [proofSignedUrl, setProofSignedUrl] = useState<string | null>(null);
   const [treeNum, setTreeNum] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -42,8 +47,23 @@ export function Picker({ navigate }: { navigate: (s: Screen) => void }) {
 
   async function goToSuccess() {
     if (!farmer) return;
+    if (!proofFile) {
+      setSubmitError("Please attach your UPI payment screenshot first.");
+      return;
+    }
     setSubmitting(true);
     setSubmitError(null);
+
+    let compressedBlob: Blob;
+    try {
+      const compressed = await compressImage(proofFile);
+      compressedBlob = compressed.blob;
+    } catch (e) {
+      setSubmitting(false);
+      const msg = e instanceof Error ? e.message : String(e);
+      setSubmitError(`Could not process the screenshot: ${msg}`);
+      return;
+    }
 
     const fd = new FormData();
     fd.set("farmer_id", farmer.id);
@@ -52,6 +72,8 @@ export function Picker({ navigate }: { navigate: (s: Screen) => void }) {
     fd.set("donor_email", donorEmail);
     fd.set("donor_phone", donorPhone);
     fd.set("payment_method", "upi_manual");
+    if (isAnonymous) fd.set("is_anonymous", "on");
+    fd.set("payment_proof", compressedBlob, "payment-proof.jpg");
 
     const result = await submitDonation({ error: null }, fd);
     setSubmitting(false);
@@ -62,6 +84,7 @@ export function Picker({ navigate }: { navigate: (s: Screen) => void }) {
     }
 
     setTreeNum(result.reference ?? "—");
+    setProofSignedUrl(result.paymentProofUrl ?? null);
     setStep("success");
   }
 
@@ -72,6 +95,7 @@ export function Picker({ navigate }: { navigate: (s: Screen) => void }) {
         plan={plan}
         treeNum={treeNum}
         donorName={donorName || "You"}
+        proofUrl={proofSignedUrl ?? proofPreviewUrl}
         navigate={navigate}
       />
     );
@@ -91,6 +115,15 @@ export function Picker({ navigate }: { navigate: (s: Screen) => void }) {
         setDonorEmail={setDonorEmail}
         donorPhone={donorPhone}
         setDonorPhone={setDonorPhone}
+        isAnonymous={isAnonymous}
+        setIsAnonymous={setIsAnonymous}
+        proofFile={proofFile}
+        proofPreviewUrl={proofPreviewUrl}
+        setProofFile={(f) => {
+          setProofFile(f);
+          if (proofPreviewUrl) URL.revokeObjectURL(proofPreviewUrl);
+          setProofPreviewUrl(f ? URL.createObjectURL(f) : null);
+        }}
         submitting={submitting}
         submitError={submitError}
         onBack={() => setStep("profile")}
@@ -887,6 +920,162 @@ function FarmerProfile({
   );
 }
 
+// ----- Payment screenshot picker (mobile-friendly) -----
+function ProofPicker({
+  proofFile,
+  proofPreviewUrl,
+  setProofFile,
+}: {
+  proofFile: File | null;
+  proofPreviewUrl: string | null;
+  setProofFile: (f: File | null) => void;
+}) {
+  const inputId = "payment-proof-input";
+  const kb = proofFile ? Math.round(proofFile.size / 1024) : 0;
+
+  return (
+    <div
+      style={{
+        marginTop: 6,
+        padding: 14,
+        background: proofFile
+          ? "color-mix(in oklch, var(--moss-soft) 30%, var(--paper))"
+          : "var(--paper-2)",
+        border: `1px ${proofFile ? "solid var(--moss)" : "dashed var(--line-2)"}`,
+        borderRadius: 10,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          gap: 10,
+          alignItems: "baseline",
+          justifyContent: "space-between",
+        }}
+      >
+        <div className="eyebrow">Payment screenshot · required</div>
+        {proofFile && (
+          <button
+            type="button"
+            onClick={() => setProofFile(null)}
+            style={{
+              background: "none",
+              border: 0,
+              color: "var(--terra)",
+              fontFamily: "var(--font-mono)",
+              fontSize: 10,
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              cursor: "pointer",
+              padding: 0,
+            }}
+          >
+            remove ×
+          </button>
+        )}
+      </div>
+
+      <p
+        style={{
+          margin: "6px 0 12px",
+          fontSize: 12,
+          color: "var(--ink-2)",
+          lineHeight: 1.45,
+        }}
+      >
+        Take a screenshot of the successful UPI payment (any UPI app) and attach
+        it here. We compress it before upload — works on slow connections.
+      </p>
+
+      <input
+        id={inputId}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={(e) => {
+          const f = e.target.files?.[0] ?? null;
+          setProofFile(f);
+        }}
+        style={{ display: "none" }}
+      />
+
+      {proofFile && proofPreviewUrl ? (
+        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={proofPreviewUrl}
+            alt="Payment screenshot preview"
+            style={{
+              width: 72,
+              height: 72,
+              objectFit: "cover",
+              borderRadius: 8,
+              border: "1px solid var(--moss)",
+              flexShrink: 0,
+            }}
+          />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: 11,
+                color: "var(--moss)",
+                letterSpacing: "0.04em",
+                textTransform: "uppercase",
+                marginBottom: 4,
+              }}
+            >
+              ✓ attached
+            </div>
+            <div
+              style={{
+                fontSize: 13,
+                color: "var(--ink-2)",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {proofFile.name}
+            </div>
+            <div
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: 10,
+                color: "var(--muted)",
+                marginTop: 2,
+              }}
+            >
+              {kb}KB · will compress before upload
+            </div>
+          </div>
+          <label
+            htmlFor={inputId}
+            className="btn ghost sm"
+            style={{ cursor: "pointer", whiteSpace: "nowrap" }}
+          >
+            replace
+          </label>
+        </div>
+      ) : (
+        <label
+          htmlFor={inputId}
+          className="btn"
+          style={{
+            display: "inline-flex",
+            cursor: "pointer",
+            background: "var(--paper)",
+            color: "var(--ink)",
+            border: "1px solid var(--line)",
+          }}
+        >
+          📷 Choose screenshot
+        </label>
+      )}
+    </div>
+  );
+}
+
 // ----- UPI Pay Flow -----
 function PayFlow({
   farmer,
@@ -900,6 +1089,11 @@ function PayFlow({
   setDonorEmail,
   donorPhone,
   setDonorPhone,
+  isAnonymous,
+  setIsAnonymous,
+  proofFile,
+  proofPreviewUrl,
+  setProofFile,
   submitting,
   submitError,
   onBack,
@@ -916,6 +1110,11 @@ function PayFlow({
   setDonorEmail: (v: string) => void;
   donorPhone: string;
   setDonorPhone: (v: string) => void;
+  isAnonymous: boolean;
+  setIsAnonymous: (v: boolean) => void;
+  proofFile: File | null;
+  proofPreviewUrl: string | null;
+  setProofFile: (f: File | null) => void;
   submitting: boolean;
   submitError: string | null;
   onBack: () => void;
@@ -1121,22 +1320,58 @@ function PayFlow({
             </div>
             <h3 style={{ marginBottom: 8 }}>Confirm your payment</h3>
             <p style={{ color: "var(--ink-2)", fontSize: 13, marginTop: 0 }}>
-              After paying, fill this in. We&apos;ll open a private message
-              thread with {farmer.name.split(" ")[0]}-ji so you can send your
-              payment screenshot directly to them.
+              After paying, fill this in and attach your UPI payment screenshot.
+              The screenshot lands in your private thread with{" "}
+              {farmer.name.split(" ")[0]}-ji as soon as our team verifies it.
             </p>
 
             <div className="col" style={{ gap: 12, marginTop: 16 }}>
               <label>
-                <div className="eyebrow" style={{ marginBottom: 6 }}>
-                  Your name (for the certificate)
+                <div
+                  className="eyebrow"
+                  style={{
+                    marginBottom: 6,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "baseline",
+                    gap: 10,
+                  }}
+                >
+                  <span>
+                    Your name {isAnonymous ? "(for our records only)" : "(for the certificate)"}
+                  </span>
                 </div>
                 <input
                   className="input"
-                  placeholder="Aditya M."
+                  placeholder={isAnonymous ? "Still recorded internally" : "Aditya M."}
                   value={donorName}
                   onChange={(e) => setDonorName(e.target.value)}
                 />
+              </label>
+              <label
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 10,
+                  marginTop: 2,
+                  fontSize: 13,
+                  color: "var(--ink-2)",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={isAnonymous}
+                  onChange={(e) => setIsAnonymous(e.target.checked)}
+                  style={{
+                    marginTop: 3,
+                    accentColor: "oklch(0.42 0.085 145)",
+                  }}
+                />
+                <span>
+                  Donate <strong>anonymously</strong> · {farmer.name.split(" ")[0]}-ji
+                  and the public will see &ldquo;Anonymous&rdquo; instead of your
+                  name. You can still log in to follow your tree.
+                </span>
               </label>
               <label>
                 <div className="eyebrow" style={{ marginBottom: 6 }}>
@@ -1160,6 +1395,13 @@ function PayFlow({
                   onChange={(e) => setDonorPhone(e.target.value)}
                 />
               </label>
+
+              <ProofPicker
+                proofFile={proofFile}
+                proofPreviewUrl={proofPreviewUrl}
+                setProofFile={setProofFile}
+              />
+
               <label
                 style={{
                   display: "flex",
@@ -1190,15 +1432,18 @@ function PayFlow({
 
             <button
               className="btn moss"
-              disabled={!paymentConfirmed || submitting}
+              disabled={!paymentConfirmed || !proofFile || submitting}
               onClick={onDone}
               style={{
                 marginTop: 18,
                 width: "100%",
                 justifyContent: "center",
-                opacity: paymentConfirmed && !submitting ? 1 : 0.4,
+                opacity:
+                  paymentConfirmed && proofFile && !submitting ? 1 : 0.4,
                 cursor:
-                  paymentConfirmed && !submitting ? "pointer" : "not-allowed",
+                  paymentConfirmed && proofFile && !submitting
+                    ? "pointer"
+                    : "not-allowed",
               }}
             >
               {submitting
@@ -1240,12 +1485,12 @@ function PayFlow({
               style={{ margin: "8px 0 0", paddingLeft: 20, lineHeight: 1.7 }}
             >
               <li>
-                A private thread opens between you and{" "}
-                {farmer.name.split(" ")[0]}-ji
+                Our team verifies your screenshot, then opens a private thread
+                between you and {farmer.name.split(" ")[0]}-ji
               </li>
-              <li>You send the payment screenshot in-thread</li>
               <li>
-                {farmer.name.split(" ")[0]}-ji plants within 7 days · posts photo
+                {farmer.name.split(" ")[0]}-ji plants within 7 days · posts
+                photo
               </li>
               <li>All updates land on your private tree page</li>
             </ol>
@@ -1262,12 +1507,14 @@ function ThreadSuccess({
   plan,
   treeNum,
   donorName,
+  proofUrl,
   navigate,
 }: {
   farmer: Farmer;
   plan: Plan;
   treeNum: string;
   donorName: string;
+  proofUrl: string | null;
   navigate: (s: Screen) => void;
 }) {
   const amount =
@@ -1297,10 +1544,31 @@ function ThreadSuccess({
           kind: "thread-open",
           text: `Thread opened · ₹${amount.toLocaleString("en-IN")} paid to ${farmer.name.split(" ")[0]}-ji · ${speciesName} · ${tier}`,
         },
+        ...(proofUrl
+          ? [
+              {
+                id: "local-proof",
+                from: "donor" as const,
+                time: "just now",
+                kind: "payment-proof" as const,
+                caption: "Payment screenshot",
+                photoUrl: proofUrl,
+              },
+            ]
+          : []),
       ],
     }),
-    [treeNum, donorName, farmer, amount, tier, speciesName],
+    [treeNum, donorName, farmer, amount, tier, speciesName, proofUrl],
   );
+
+  // If the parent passed a blob: URL (Supabase signing failed and we fell back
+  // to the local preview), revoke it on unmount. Signed Storage URLs are
+  // plain https and need no cleanup.
+  useEffect(() => {
+    return () => {
+      if (proofUrl?.startsWith("blob:")) URL.revokeObjectURL(proofUrl);
+    };
+  }, [proofUrl]);
 
   return (
     <div className="shell" style={{ paddingTop: 36, paddingBottom: 80 }}>
@@ -1357,12 +1625,12 @@ function ThreadSuccess({
               alignItems: "flex-start",
             }}
           >
-            <span style={{ color: "var(--moss)" }}>✨</span>
+            <span style={{ color: "var(--moss)" }}>✓</span>
             <span>
-              <strong>Tip:</strong> attach your UPI payment screenshot (tap{" "}
-              <strong>+</strong> in the composer). {farmer.name.split(" ")[0]}-ji
-              will respond when the sapling is in the ground — usually within 3–7
-              days.
+              <strong>Screenshot received.</strong>{" "}
+              {farmer.name.split(" ")[0]}-ji will see it as soon as our team
+              verifies the payment — and will respond when the sapling is in the
+              ground, usually within 3–7 days.
             </span>
           </div>
         </div>

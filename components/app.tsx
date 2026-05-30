@@ -218,6 +218,21 @@ export function App() {
     applyTweaks(tweaks);
   }, [tweaks]);
 
+  // Catch Supabase auth tokens that landed on the root (e.g. the dashboard's
+  // "Send password recovery" sets redirect to the project's Site URL). Forward
+  // to /auth/callback which knows how to process the hash.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const hash = window.location.hash;
+    if (!hash) return;
+    const hasAuthToken =
+      hash.includes("access_token=") || hash.includes("error_description=");
+    if (!hasAuthToken) return;
+    const next = "/donor/set-password";
+    const target = `/auth/callback?next=${encodeURIComponent(next)}${hash}`;
+    window.location.replace(target);
+  }, []);
+
   function navigate(s: Screen) {
     setScreen(s);
     if (typeof window !== "undefined") {

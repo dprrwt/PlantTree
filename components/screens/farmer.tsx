@@ -1,10 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Chip, Placeholder, Stamp } from "@/components/shared";
 import { MessageThread, ThreadPreview } from "@/components/messaging";
 import type { Farmer as FarmerType, FarmerTree } from "@/lib/data";
 import type { FarmerWorkspace } from "@/lib/db/persona-queries";
+import { compressImage } from "@/lib/image-compress";
+import { postTreeUpdate } from "@/app/trees/actions";
 
 type Tab = "trees" | "messages" | "earnings";
 
@@ -215,14 +218,14 @@ export function Farmer({ workspace }: { workspace: FarmerWorkspace }) {
             {v.trees.map((t) => (
               <button
                 key={t.id}
-                onClick={() => (t.awaitingPlant ? null : setSelectedTreeId(t.id))}
+                onClick={() => setSelectedTreeId(t.id)}
                 className="card frame"
                 style={{
                   textAlign: "left",
-                  cursor: t.awaitingPlant ? "default" : "pointer",
+                  cursor: "pointer",
                   padding: 18,
                   position: "relative",
-                  opacity: t.awaitingPlant ? 0.85 : 1,
+                  opacity: t.awaitingPlant ? 0.92 : 1,
                 }}
               >
                 {t.needsUpdate && (
@@ -406,6 +409,7 @@ export function Farmer({ workspace }: { workspace: FarmerWorkspace }) {
               farmer={farmer}
               donorName={selectedPreview.donorName}
               height={620}
+              viewerRole="farmer"
             />
           ) : (
             <div
@@ -530,6 +534,23 @@ export function Farmer({ workspace }: { workspace: FarmerWorkspace }) {
                     <button
                       className="btn ghost sm"
                       style={{ padding: "5px 10px", fontSize: 11 }}
+                      disabled={!e.tree || e.tree === "—"}
+                      onClick={() => {
+                        if (!e.tree || e.tree === "—") return;
+                        const w = window.open(
+                          `/receipts/${e.tree}`,
+                          "_blank",
+                        );
+                        if (w) {
+                          w.addEventListener("load", () => {
+                            try {
+                              w.print();
+                            } catch {
+                              // popup blocked or closed; user can print manually
+                            }
+                          });
+                        }
+                      }}
                     >
                       receipt
                     </button>
@@ -645,19 +666,65 @@ function TreeUpdate({
   farmer: FarmerType;
   onBack: () => void;
 }) {
+  const router = useRouter();
   const [height, setHeight] = useState<number>(tree.height || 0);
-  const [health, setHealth] = useState<number>(tree.health || 100);
+  const [health, setHealth] = useState<number>(
+    tree.health === null ? 100 : tree.health,
+  );
   const [note, setNote] = useState("");
-  const [milestones, setMilestones] = useState<Record<string, boolean>>({
-    planted: !tree.awaitingPlant,
-    firstMonth: tree.height > 0.3,
-    monsoon: false,
-    firstDry: false,
-  });
+  const [markPlanted, setMarkPlanted] = useState(!!tree.awaitingPlant);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
+  const [postError, setPostError] = useState<string | null>(null);
   const [posted, setPosted] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  function togglePlanted() {
-    setMilestones({ ...milestones, planted: !milestones.planted });
+  function pickPhoto(file: File | null) {
+    if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
+    setPhotoFile(file);
+    setPhotoPreviewUrl(file ? URL.createObjectURL(file) : null);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (photoPreviewUrl) URL.revokeObjectURL(photoPreviewUrl);
+    };
+  }, [photoPreviewUrl]);
+
+  function submit() {
+    if (isPending) return;
+    setPostError(null);
+
+    startTransition(async () => {
+      const fd = new FormData();
+      fd.set("tree_id", tree.id);
+      if (note.trim()) fd.set("caption", note.trim());
+      if (height > 0) fd.set("height_m", String(height));
+      if (health > 0) fd.set("health_pct", String(health));
+      if (markPlanted && tree.awaitingPlant) fd.set("mark_planted", "on");
+
+      if (photoFile) {
+        try {
+          const compressed = await compressImage(photoFile);
+          fd.set("photo", compressed.blob, "tree-photo.jpg");
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          setPostError(`Couldn't process photo: ${msg}`);
+          return;
+        }
+      }
+
+      const result = await postTreeUpdate({ error: null }, fd);
+      if (result.error) {
+        setPostError(result.error);
+        return;
+      }
+      setPosted(true);
+      router.refresh();
+      // Tiny pause so the operator gets visual feedback before bouncing back.
+      setTimeout(() => onBack(), 900);
+    });
   }
 
   return (
@@ -678,7 +745,7 @@ function TreeUpdate({
           alignItems: "start",
         }}
       >
-        <div>
+        <div style={{ minWidth: 0 }}>
           <div className="card frame" style={{ padding: 24 }}>
             <div
               style={{
@@ -699,6 +766,119 @@ function TreeUpdate({
               page and into your chat with them. Honest is better than perfect —
               if the tree didn&apos;t grow this month, say so.
             </p>
+
+            {tree.photos && tree.photos.length > 0 && (
+              <div
+                style={{
+                  marginTop: 18,
+                  padding: 16,
+                  background: "var(--paper-2)",
+                  borderRadius: 10,
+                  border: "1px solid var(--line)",
+                }}
+              >
+                <div
+                  className="eyebrow"
+                  style={{
+                    marginBottom: 10,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "baseline",
+                  }}
+                >
+                  <span>
+                    Your updates so far · {tree.photos.length}
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: 9,
+                      letterSpacing: "0.06em",
+                      color: "var(--muted)",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    newest first
+                  </span>
+                </div>
+                <div
+                  className="scroll-pretty"
+                  style={{
+                    display: "flex",
+                    gap: 10,
+                    overflowX: "auto",
+                    paddingBottom: 8,
+                  }}
+                >
+                  {tree.photos.map((p, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        flexShrink: 0,
+                        width: 130,
+                      }}
+                    >
+                      {p.photoUrl ? (
+                        <a
+                          href={p.photoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ display: "block" }}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={p.photoUrl}
+                            alt={p.caption || p.date}
+                            style={{
+                              width: "100%",
+                              aspectRatio: "1/1",
+                              objectFit: "cover",
+                              borderRadius: 8,
+                              border: "1px solid var(--line)",
+                              display: "block",
+                            }}
+                          />
+                        </a>
+                      ) : (
+                        <div
+                          className="placeholder-img moss"
+                          style={{ aspectRatio: "1/1", borderRadius: 8 }}
+                        >
+                          <span className="label">no photo</span>
+                        </div>
+                      )}
+                      <div
+                        style={{
+                          marginTop: 6,
+                          fontFamily: "var(--font-mono)",
+                          fontSize: 9,
+                          color: "var(--muted)",
+                          letterSpacing: "0.06em",
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        {p.date}
+                      </div>
+                      {p.caption && (
+                        <div
+                          style={{
+                            marginTop: 4,
+                            fontSize: 12,
+                            color: "var(--ink-2)",
+                            display: "-webkit-box",
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: "vertical",
+                            overflow: "hidden",
+                          }}
+                        >
+                          {p.caption}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {tree.awaitingPlant && (
               <div
@@ -733,8 +913,8 @@ function TreeUpdate({
                 >
                   <input
                     type="checkbox"
-                    checked={milestones.planted}
-                    onChange={togglePlanted}
+                    checked={markPlanted}
+                    onChange={(e) => setMarkPlanted(e.target.checked)}
                     style={{
                       accentColor: "oklch(0.42 0.085 145)",
                       width: 20,
@@ -755,17 +935,76 @@ function TreeUpdate({
                 {tree.awaitingPlant
                   ? "of the planted sapling"
                   : "of how it's doing"}
+                {markPlanted && tree.awaitingPlant && (
+                  <span style={{ color: "var(--terra)" }}> · required</span>
+                )}
               </div>
-              <div
-                className="placeholder-img"
-                style={{
-                  aspectRatio: "16/10",
-                  borderRadius: 10,
-                  position: "relative",
-                }}
-              >
-                <span className="label">tap to upload · or drag a photo here</span>
-              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={(e) => pickPhoto(e.target.files?.[0] ?? null)}
+                style={{ display: "none" }}
+              />
+              {photoPreviewUrl ? (
+                <div style={{ position: "relative" }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={photoPreviewUrl}
+                    alt="Tree photo preview"
+                    style={{
+                      width: "100%",
+                      aspectRatio: "16/10",
+                      objectFit: "cover",
+                      borderRadius: 10,
+                      border: "1px solid var(--moss)",
+                      display: "block",
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      pickPhoto(null);
+                      if (fileInputRef.current) fileInputRef.current.value = "";
+                    }}
+                    style={{
+                      position: "absolute",
+                      top: 8,
+                      right: 8,
+                      background: "var(--paper)",
+                      border: "1px solid var(--terra)",
+                      color: "var(--terra)",
+                      fontFamily: "var(--font-mono)",
+                      fontSize: 10,
+                      letterSpacing: "0.06em",
+                      textTransform: "uppercase",
+                      padding: "4px 8px",
+                      borderRadius: 6,
+                      cursor: "pointer",
+                    }}
+                  >
+                    remove ×
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="placeholder-img"
+                  style={{
+                    aspectRatio: "16/10",
+                    borderRadius: 10,
+                    position: "relative",
+                    width: "100%",
+                    border: "1px dashed var(--line-2)",
+                    background: "var(--paper-2)",
+                    cursor: "pointer",
+                  }}
+                >
+                  <span className="label">📷 tap to take or pick a photo</span>
+                </button>
+              )}
               <div
                 style={{
                   marginTop: 8,
@@ -816,56 +1055,6 @@ function TreeUpdate({
             </div>
 
             <div style={{ marginTop: 24 }}>
-              <div className="eyebrow" style={{ marginBottom: 10 }}>
-                Mark any milestones
-              </div>
-              <div className="col" style={{ gap: 8 }}>
-                {[
-                  { id: "planted", label: "Planted in the ground" },
-                  { id: "firstMonth", label: "Survived the first month" },
-                  { id: "monsoon", label: "Made it through the monsoon" },
-                  {
-                    id: "firstDry",
-                    label: "Made it through the first dry season",
-                  },
-                ].map((m) => (
-                  <label
-                    key={m.id}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 10,
-                      padding: "10px 14px",
-                      background: milestones[m.id]
-                        ? "color-mix(in oklch, var(--moss-soft) 40%, var(--paper))"
-                        : "var(--paper-2)",
-                      border: `1px solid ${milestones[m.id] ? "var(--moss)" : "var(--line)"}`,
-                      borderRadius: 8,
-                      cursor: "pointer",
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={!!milestones[m.id]}
-                      onChange={() =>
-                        setMilestones({
-                          ...milestones,
-                          [m.id]: !milestones[m.id],
-                        })
-                      }
-                      style={{
-                        accentColor: "oklch(0.42 0.085 145)",
-                        width: 18,
-                        height: 18,
-                      }}
-                    />
-                    <span>{m.label}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div style={{ marginTop: 24 }}>
               <div className="eyebrow" style={{ marginBottom: 6 }}>
                 Note for {tree.donor.split(" ")[0]}
               </div>
@@ -900,17 +1089,37 @@ function TreeUpdate({
             >
               <button
                 className="btn moss"
-                onClick={() => {
-                  setPosted(true);
-                  setTimeout(() => onBack(), 1200);
+                onClick={submit}
+                disabled={isPending || posted}
+                style={{
+                  opacity: isPending ? 0.6 : 1,
+                  cursor: isPending ? "not-allowed" : "pointer",
                 }}
               >
                 {posted
                   ? "✓ Posted"
-                  : `Post to ${tree.donor.split(" ")[0]}'s tree page`}
+                  : isPending
+                    ? "Posting…"
+                    : `Post to ${tree.donor.split(" ")[0]}'s tree page`}
               </button>
-              <button className="btn ghost">Save draft</button>
             </div>
+
+            {postError && (
+              <div
+                style={{
+                  marginTop: 12,
+                  padding: "10px 14px",
+                  background:
+                    "color-mix(in oklch, var(--terra-soft) 30%, var(--paper))",
+                  border: "1px solid var(--terra)",
+                  borderRadius: 8,
+                  color: "var(--terra)",
+                  fontSize: 13,
+                }}
+              >
+                {postError}
+              </div>
+            )}
           </div>
         </div>
 
@@ -930,12 +1139,27 @@ function TreeUpdate({
                 marginTop: 10,
               }}
             >
-              <div
-                className="placeholder-img moss"
-                style={{ aspectRatio: "4/3", borderRadius: 8 }}
-              >
-                <span className="label">your photo</span>
-              </div>
+              {photoPreviewUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={photoPreviewUrl}
+                  alt="Photo preview"
+                  style={{
+                    width: "100%",
+                    aspectRatio: "4/3",
+                    objectFit: "cover",
+                    borderRadius: 8,
+                    display: "block",
+                  }}
+                />
+              ) : (
+                <div
+                  className="placeholder-img moss"
+                  style={{ aspectRatio: "4/3", borderRadius: 8 }}
+                >
+                  <span className="label">your photo</span>
+                </div>
+              )}
               <div
                 style={{
                   marginTop: 10,

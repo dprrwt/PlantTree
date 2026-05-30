@@ -11,8 +11,25 @@ import {
   UttarakhandMap,
 } from "@/components/shared";
 import { MessageBubble, MessageThread } from "@/components/messaging";
-import { PlotView } from "@/components/plot";
+import { PlotLocator } from "@/components/plot";
 import type { DonorGrove, DonorTree } from "@/lib/db/persona-queries";
+
+// Google Maps Search-API format — same URL works on desktop (opens a new tab)
+// and on mobile (deep-links into the Maps app on iOS and Android).
+function googleMapsUrl(lat: number, lng: number): string {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+    `${lat},${lng}`,
+  )}`;
+}
+
+// Human-readable "degree° minute' DIR" formatter — used in the Maps link
+// subtitle so the donor sees a recognizable coordinate format.
+function formatCoord(value: number, posDir: string, negDir: string): string {
+  const abs = Math.abs(value);
+  const deg = Math.floor(abs);
+  const min = ((abs - deg) * 60).toFixed(3);
+  return `${deg}° ${min}′ ${value >= 0 ? posDir : negDir}`;
+}
 
 export function Donor({ grove }: { grove: DonorGrove }) {
   const [selectedTreeId, setSelectedTreeId] = useState<string | null>(null);
@@ -320,6 +337,7 @@ function TreeDetail({ tree, onBack }: { tree: DonorTree; onBack: () => void }) {
             farmer={farmer}
             donorName="You"
             height={640}
+            viewerRole="donor"
           />
           <div className="card frame" style={{ padding: 20 }}>
             <div className="eyebrow" style={{ marginBottom: 10 }}>
@@ -384,7 +402,7 @@ function TreeDetail({ tree, onBack }: { tree: DonorTree; onBack: () => void }) {
           alignItems: "start",
         }}
       >
-        <div>
+        <div style={{ minWidth: 0 }}>
           <div className="card frame" style={{ padding: 22, position: "relative" }}>
             <div style={{ position: "absolute", top: -14, right: 22 }}>
               <Stamp color="var(--moss)" rotation={3}>
@@ -548,7 +566,126 @@ function TreeDetail({ tree, onBack }: { tree: DonorTree; onBack: () => void }) {
             </div>
             {tree.plot ? (
               <>
-                <PlotView plot={tree.plot} height={280} />
+                {tree.plot.lat !== null && tree.plot.lng !== null && (
+                  <>
+                    <PlotLocator
+                      plot={tree.plot as typeof tree.plot & { lat: number; lng: number }}
+                      height={300}
+                    />
+
+                    <a
+                      href={googleMapsUrl(tree.plot.lat, tree.plot.lng)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        marginTop: 14,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 12,
+                        padding: "12px 16px",
+                        background: "var(--paper-2)",
+                        border: "1px dashed var(--line-2)",
+                        borderRadius: 10,
+                        textDecoration: "none",
+                        color: "var(--ink)",
+                        transition: "background 0.15s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background =
+                          "color-mix(in oklch, var(--moss-soft) 30%, var(--paper))";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "var(--paper-2)";
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 12,
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: "50%",
+                            background: "var(--paper)",
+                            border: "1px solid var(--line)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0,
+                          }}
+                        >
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            style={{ color: "var(--terra)" }}
+                          >
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                            <circle cx="12" cy="10" r="3" />
+                          </svg>
+                        </div>
+                        <div>
+                          <div
+                            style={{
+                              fontFamily: "var(--font-display)",
+                              fontSize: 16,
+                            }}
+                          >
+                            View on Google Maps
+                          </div>
+                          <div
+                            style={{
+                              fontFamily: "var(--font-mono)",
+                              fontSize: 10,
+                              color: "var(--muted)",
+                              letterSpacing: "0.06em",
+                              marginTop: 2,
+                            }}
+                          >
+                            {formatCoord(tree.plot.lat, "N", "S")} ·{" "}
+                            {formatCoord(tree.plot.lng, "E", "W")}
+                          </div>
+                        </div>
+                      </div>
+                      <span
+                        style={{
+                          fontFamily: "var(--font-mono)",
+                          fontSize: 11,
+                          color: "var(--muted)",
+                          letterSpacing: "0.04em",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 4,
+                        }}
+                      >
+                        opens in new tab
+                        <svg
+                          width="11"
+                          height="11"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M7 17L17 7" />
+                          <path d="M7 7h10v10" />
+                        </svg>
+                      </span>
+                    </a>
+                  </>
+                )}
                 <div
                   style={{
                     marginTop: 14,
@@ -618,7 +755,7 @@ function TreeDetail({ tree, onBack }: { tree: DonorTree; onBack: () => void }) {
           </div>
         </div>
 
-        <div className="col" style={{ gap: 22 }}>
+        <div className="col" style={{ gap: 22, minWidth: 0 }}>
           <div className="card frame" style={{ padding: 22 }}>
             <div className="eyebrow" style={{ marginBottom: 14 }}>
               Receipt
@@ -654,9 +791,34 @@ function TreeDetail({ tree, onBack }: { tree: DonorTree; onBack: () => void }) {
                 </span>
               </div>
             </div>
-            <button className="btn ghost sm" style={{ marginTop: 14 }}>
-              Download certificate (PDF) →
-            </button>
+            <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+              <a
+                className="btn moss sm"
+                href={`/certificates/${tree.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ textDecoration: "none" }}
+              >
+                Download certificate →
+              </a>
+              <button
+                className="btn ghost sm"
+                onClick={() => {
+                  const w = window.open(`/receipts/${tree.id}`, "_blank");
+                  if (w) {
+                    w.addEventListener("load", () => {
+                      try {
+                        w.print();
+                      } catch {
+                        // popup may have been blocked or already closed
+                      }
+                    });
+                  }
+                }}
+              >
+                Print receipt
+              </button>
+            </div>
           </div>
 
           {farmer && (
@@ -794,10 +956,41 @@ function TreeDetail({ tree, onBack }: { tree: DonorTree; onBack: () => void }) {
               <div className="eyebrow" style={{ marginBottom: 14 }}>
                 Photo updates · posted by {farmer.name.split(" ")[0]}-ji
               </div>
-              <div className="hscroll">
+              <div
+                className="scroll-pretty"
+                style={{
+                  display: "flex",
+                  gap: 16,
+                  overflowX: "scroll",
+                  paddingBottom: 10,
+                }}
+              >
                 {tree.photos.map((p, i) => (
                   <div key={i} style={{ flexShrink: 0, width: 170 }}>
-                    <Placeholder label={p.date} tone="moss" aspect="3/4" />
+                    {p.photoUrl ? (
+                      <a
+                        href={p.photoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ display: "block" }}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={p.photoUrl}
+                          alt={p.caption || p.date}
+                          style={{
+                            width: "100%",
+                            aspectRatio: "3/4",
+                            objectFit: "cover",
+                            borderRadius: 10,
+                            border: "1px solid var(--line)",
+                            display: "block",
+                          }}
+                        />
+                      </a>
+                    ) : (
+                      <Placeholder label={p.date} tone="moss" aspect="3/4" />
+                    )}
                     <div
                       style={{
                         marginTop: 8,

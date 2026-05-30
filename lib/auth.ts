@@ -40,3 +40,22 @@ export async function requireOperator(): Promise<Profile> {
   }
   return profile;
 }
+
+// Gate the farmer workspace. Redirects to /farmer/login if not signed in as a
+// farmer (or if the farmer record has been deleted).
+export async function requireFarmer(): Promise<Profile & { farmer_id: string }> {
+  const profile = await getCurrentProfile();
+  if (!profile || profile.role !== "farmer" || !profile.farmer_id) {
+    redirect("/farmer/login");
+  }
+  return profile as Profile & { farmer_id: string };
+}
+
+// Gate the donor grove. Redirects to /donor/login if not signed in as a donor.
+export async function requireDonor(): Promise<Profile & { donor_id: string }> {
+  const profile = await getCurrentProfile();
+  if (!profile || profile.role !== "donor" || !profile.donor_id) {
+    redirect("/donor/login");
+  }
+  return profile as Profile & { donor_id: string };
+}

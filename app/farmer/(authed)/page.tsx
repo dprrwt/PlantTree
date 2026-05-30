@@ -1,12 +1,13 @@
 import { notFound } from "next/navigation";
 import { Farmer } from "@/components/screens/farmer";
+import { requireFarmer } from "@/lib/auth";
 import { getFarmerWorkspace } from "@/lib/db/persona-queries";
-import { PERSONA_FARMER_ID } from "@/lib/persona";
 
 export const dynamic = "force-dynamic";
 
 export default async function FarmerPage() {
-  const workspace = await getFarmerWorkspace(PERSONA_FARMER_ID);
+  const profile = await requireFarmer();
+  const workspace = await getFarmerWorkspace(profile.farmer_id);
   if (!workspace) notFound();
   return <Farmer workspace={workspace} />;
 }

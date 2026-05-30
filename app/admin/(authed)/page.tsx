@@ -504,13 +504,14 @@ function PendingRow({
     <div
       style={{
         display: "grid",
-        gridTemplateColumns: "1fr 1.4fr 1fr auto",
+        gridTemplateColumns: "auto 1fr 1.4fr 1fr auto",
         gap: 16,
         alignItems: "center",
         padding: "14px 0",
         borderBottom: divider ? "1px dotted var(--line-2)" : "none",
       }}
     >
+      <ProofThumbnail url={p.paymentProofUrl} />
       <div>
         <div style={{ fontFamily: "var(--font-display)", fontSize: 18 }}>
           {p.isAnonymous ? "Anonymous" : p.donorName}
@@ -579,6 +580,63 @@ function PendingRow({
         </form>
       </div>
     </div>
+  );
+}
+
+function ProofThumbnail({ url }: { url: string | null }) {
+  if (!url) {
+    return (
+      <div
+        style={{
+          width: 64,
+          height: 64,
+          borderRadius: 8,
+          border: "1px dashed var(--line-2)",
+          background: "var(--paper-2)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "var(--muted)",
+          fontFamily: "var(--font-mono)",
+          fontSize: 9,
+          letterSpacing: "0.04em",
+          textAlign: "center",
+          padding: 4,
+        }}
+        title="No screenshot attached"
+      >
+        no proof
+      </div>
+    );
+  }
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      title="Open full-size payment screenshot"
+      style={{
+        display: "block",
+        width: 64,
+        height: 64,
+        borderRadius: 8,
+        overflow: "hidden",
+        border: "1px solid var(--line)",
+        flexShrink: 0,
+      }}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={url}
+        alt="Payment screenshot"
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          display: "block",
+        }}
+      />
+    </a>
   );
 }
 

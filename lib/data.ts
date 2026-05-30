@@ -53,6 +53,7 @@ export interface TreePhoto {
   date: string;
   caption: string;
   by: string;
+  photoUrl?: string;
 }
 
 export interface TreeMilestone {
@@ -124,7 +125,13 @@ export interface Grove {
   trees: Tree[];
 }
 
-export type MessageKind = "text" | "photo" | "thread-open" | "planting" | "milestone";
+export type MessageKind =
+  | "text"
+  | "photo"
+  | "thread-open"
+  | "planting"
+  | "milestone"
+  | "payment-proof";
 
 export interface Message {
   id: string;
@@ -134,6 +141,7 @@ export interface Message {
   text?: string;
   caption?: string;
   photoTone?: PhotoTone;
+  photoUrl?: string;
 }
 
 export interface Thread {
@@ -154,6 +162,7 @@ export interface FarmerTree {
   unread: number;
   needsUpdate?: boolean;
   awaitingPlant?: boolean;
+  photos?: TreePhoto[];
 }
 
 export interface Earning {

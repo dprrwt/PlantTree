@@ -1,8 +1,67 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useTransition } from "react";
 import { Placeholder, Chip } from "./shared";
 import type { Farmer, Message, Thread } from "@/lib/data";
+import { sendMessage, sendPhotoMessage } from "@/app/messages/actions";
+import { createClient } from "@/lib/supabase/client";
+import { compressImage } from "@/lib/image-compress";
+
+// tree-photos is a public bucket, so we can build the URL straight from the
+// project URL + key without a round-trip to sign. This matters for realtime
+// arrivals where we can't (cheaply) call the server to sign every event.
+function publicTreePhotoUrl(key: string): string | undefined {
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!base) return undefined;
+  return `${base}/storage/v1/object/public/tree-photos/${key}`;
+}
+
+// Format a UTC timestamp the same way the server-side persona-queries do, so
+// realtime arrivals look identical to messages that came from the DB on load.
+function formatMsgTime(iso: string): string {
+  const d = new Date(iso);
+  const date = d.toLocaleDateString("en-IN", {
+    month: "short",
+    day: "numeric",
+  });
+  const time = d.toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  return `${date} · ${time}`;
+}
+
+// Map a postgres_changes INSERT payload (snake_case DB row) to our in-memory
+// Message shape. payment-proof rows carry photo_key but no signed URL — the
+// donor will see the bubble immediately and the image populates on next page
+// load when persona-queries signs the URL. Live signing here would require an
+// extra round-trip for every realtime event.
+function payloadRowToMessage(row: Record<string, unknown>): Message {
+  const kind = row.kind as Message["kind"];
+  const photoKey = row.photo_key as string | null;
+  // For public-bucket photo messages we can construct the URL inline.
+  // payment-proof messages live in a private bucket — leave photoUrl undefined
+  // and let the next page load surface the signed URL via persona-queries.
+  const photoUrl =
+    kind === "photo" && photoKey ? publicTreePhotoUrl(photoKey) : undefined;
+  return {
+    id: String(row.id),
+    from: row.from_role as Message["from"],
+    time: formatMsgTime(String(row.created_at)),
+    kind,
+    text:
+      (row.text_en as string | null) ??
+      (row.text_original as string | null) ??
+      undefined,
+    caption:
+      (row.caption_en as string | null) ??
+      (row.caption_original as string | null) ??
+      undefined,
+    photoTone: (row.photo_tone as Message["photoTone"]) ?? undefined,
+    photoUrl,
+  };
+}
 
 // ---------- MessageBubble ----------
 export function MessageBubble({
@@ -58,13 +117,20 @@ export function MessageBubble({
   }
 
   const align = isDonor ? "flex-end" : "flex-start";
-  const bg = isDonor
-    ? "color-mix(in oklch, var(--moss-soft) 60%, var(--paper))"
-    : "var(--paper)";
-  const border = isDonor
-    ? "1px solid color-mix(in oklch, var(--moss) 35%, var(--paper))"
-    : "1px solid var(--line)";
+  const isPaymentProof = msg.kind === "payment-proof";
+  const bg = isPaymentProof
+    ? "var(--paper)"
+    : isDonor
+      ? "color-mix(in oklch, var(--moss-soft) 60%, var(--paper))"
+      : "var(--paper)";
+  const border = isPaymentProof
+    ? "1px solid var(--terra)"
+    : isDonor
+      ? "1px solid color-mix(in oklch, var(--moss) 35%, var(--paper))"
+      : "1px solid var(--line)";
   const author = isDonor ? donorName : farmerName + "-ji";
+  const hasImage = msg.kind === "photo" || isPaymentProof;
+  const bubblePadding = hasImage ? 6 : "10px 14px";
 
   return (
     <div style={{ display: "flex", justifyContent: align, marginBottom: 10 }}>
@@ -87,6 +153,11 @@ export function MessageBubble({
             padding: "0 4px",
           }}
         >
+          {isPaymentProof && (
+            <span style={{ color: "var(--terra)" }}>
+              payment proof ·{" "}
+            </span>
+          )}
           {author} · {msg.time}
         </div>
         <div
@@ -96,20 +167,41 @@ export function MessageBubble({
             borderRadius: 14,
             borderTopRightRadius: isDonor ? 4 : 14,
             borderTopLeftRadius: isDonor ? 14 : 4,
-            padding: msg.kind === "photo" ? 6 : "10px 14px",
+            padding: bubblePadding,
             fontSize: 14,
             lineHeight: 1.45,
             color: "var(--ink)",
           }}
         >
-          {msg.kind === "photo" && (
-            <Placeholder
-              label={msg.caption ? "photo" : "image"}
-              tone={msg.photoTone === "neutral" ? "neutral" : msg.photoTone || "moss"}
-              aspect="4/3"
-              style={{ width: 280, maxWidth: "100%", borderRadius: 10 }}
-            />
-          )}
+          {hasImage &&
+            (msg.photoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <a
+                href={msg.photoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ display: "block" }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={msg.photoUrl}
+                  alt={msg.caption ?? "Attached photo"}
+                  style={{
+                    width: 280,
+                    maxWidth: "100%",
+                    borderRadius: 10,
+                    display: "block",
+                  }}
+                />
+              </a>
+            ) : (
+              <Placeholder
+                label={isPaymentProof ? "payment proof" : msg.caption ? "photo" : "image"}
+                tone={msg.photoTone === "neutral" ? "neutral" : msg.photoTone || "moss"}
+                aspect="4/3"
+                style={{ width: 280, maxWidth: "100%", borderRadius: 10 }}
+              />
+            ))}
           {msg.caption && (
             <div
               style={{
@@ -122,8 +214,8 @@ export function MessageBubble({
               {msg.caption}
             </div>
           )}
-          {msg.text && msg.kind !== "photo" && <div>{msg.text}</div>}
-          {msg.text && msg.kind === "photo" && (
+          {msg.text && !hasImage && <div>{msg.text}</div>}
+          {msg.text && hasImage && (
             <div style={{ padding: "0 8px 6px", fontSize: 13 }}>{msg.text}</div>
           )}
         </div>
@@ -138,9 +230,12 @@ export interface MessageThreadProps {
   farmer: Farmer;
   donorName?: string;
   height?: number;
-  onSendScreenshot?: () => void;
   hasComposer?: boolean;
   headerless?: boolean;
+  // When set, send() persists the message via the server action under this
+  // role. When omitted, the composer is local-only (used by the picker's
+  // success screen before the tree row exists).
+  viewerRole?: "donor" | "farmer";
 }
 
 export function MessageThread({
@@ -148,14 +243,24 @@ export function MessageThread({
   farmer,
   donorName = "You",
   height = 520,
-  onSendScreenshot,
   hasComposer = true,
   headerless,
+  viewerRole,
 }: MessageThreadProps) {
   const [text, setText] = useState("");
   const [localMessages, setLocalMessages] = useState<Message[]>(thread.messages);
-  const [showAttach, setShowAttach] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // If a fresh thread arrives from the server (revalidate, page nav), reset
+  // local state so we don't keep stale optimistic entries that were already
+  // persisted and re-fetched.
+  useEffect(() => {
+    setLocalMessages(thread.messages);
+  }, [thread.messages]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -163,35 +268,173 @@ export function MessageThread({
     }
   }, [localMessages.length]);
 
+  // Realtime: subscribe to INSERTs on messages for this tree. RLS still
+  // applies — donors get events only for their own trees, farmers only for
+  // theirs. The picker's pre-auth success screen passes no viewerRole, so we
+  // skip realtime there (there's no real tree to listen to anyway).
+  //
+  // We explicitly call realtime.setAuth() with the user's access token before
+  // subscribing — @supabase/ssr stores the session in cookies but does not
+  // always propagate that token to the Realtime socket, which causes RLS to
+  // evaluate as anon and silently drop every event.
+  useEffect(() => {
+    if (!viewerRole || !thread.treeId) return;
+
+    const supabase = createClient();
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    let cancelled = false;
+
+    (async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (cancelled) return;
+      if (session?.access_token) {
+        supabase.realtime.setAuth(session.access_token);
+      }
+
+      channel = supabase
+        .channel(`tree-messages:${thread.treeId}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "messages",
+            filter: `tree_id=eq.${thread.treeId}`,
+          },
+          (payload) => {
+            const incoming = payloadRowToMessage(
+              payload.new as Record<string, unknown>,
+            );
+            setLocalMessages((prev) => {
+              // Skip if we already have this server id (page-load dupe or
+              // double-fire from a reconnect).
+              if (prev.some((m) => m.id === incoming.id)) return prev;
+              // Drop the matching optimistic placeholder, if any: same
+              // author, same text, still pending an id swap. Identifying by
+              // exact text match keeps the logic dumb and works because the
+              // user can't send two identical messages in a few hundred ms.
+              const withoutOptimistic = prev.filter((m) => {
+                if (!m.id.startsWith("local-")) return true;
+                if (m.from !== incoming.from) return true;
+                if (m.text !== incoming.text) return true;
+                return false;
+              });
+              return [...withoutOptimistic, incoming];
+            });
+          },
+        )
+        .subscribe((status, err) => {
+          if (process.env.NODE_ENV !== "production") {
+            // eslint-disable-next-line no-console
+            console.log(
+              `[realtime] tree-messages:${thread.treeId} → ${status}`,
+              err ?? "",
+            );
+          }
+        });
+    })();
+
+    return () => {
+      cancelled = true;
+      if (channel) supabase.removeChannel(channel);
+    };
+  }, [thread.treeId, viewerRole]);
+
   function send() {
-    if (!text.trim()) return;
-    setLocalMessages([
-      ...localMessages,
+    const trimmed = text.trim();
+    if (!trimmed || isPending) return;
+
+    const optimisticId = "local-" + Date.now();
+    const fromRole: "donor" | "farmer" = viewerRole ?? "donor";
+    setLocalMessages((prev) => [
+      ...prev,
       {
-        id: "local-" + Date.now(),
-        from: "donor",
+        id: optimisticId,
+        from: fromRole,
         time: "just now",
         kind: "text",
-        text: text.trim(),
+        text: trimmed,
       },
     ]);
     setText("");
+    setSendError(null);
+
+    if (!viewerRole) return; // local-only mode (e.g. picker success screen)
+
+    startTransition(async () => {
+      const fd = new FormData();
+      fd.set("tree_id", thread.treeId);
+      fd.set("text", trimmed);
+      const result = await sendMessage({ error: null }, fd);
+      if (result.error) {
+        setSendError(result.error);
+        // Roll back the optimistic message so the donor/farmer can retry.
+        setLocalMessages((prev) =>
+          prev.filter((m) => m.id !== optimisticId),
+        );
+        setText(trimmed); // restore the draft
+      }
+    });
   }
 
-  function attachScreenshot() {
-    setLocalMessages([
-      ...localMessages,
+  async function handlePhotoPick(file: File | null) {
+    if (!file) return;
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (!viewerRole || !thread.treeId) return;
+
+    setSendError(null);
+    setIsUploadingPhoto(true);
+
+    let compressed: Blob;
+    try {
+      compressed = (await compressImage(file)).blob;
+    } catch (e) {
+      setIsUploadingPhoto(false);
+      const msg = e instanceof Error ? e.message : String(e);
+      setSendError(`Couldn't process photo: ${msg}`);
+      return;
+    }
+
+    const optimisticId = "local-" + Date.now();
+    const previewUrl = URL.createObjectURL(file);
+    setLocalMessages((prev) => [
+      ...prev,
       {
-        id: "local-" + Date.now(),
-        from: "donor",
+        id: optimisticId,
+        from: viewerRole,
         time: "just now",
         kind: "photo",
-        caption: "Payment screenshot",
-        photoTone: "neutral",
+        photoUrl: previewUrl,
       },
     ]);
-    setShowAttach(false);
-    if (onSendScreenshot) onSendScreenshot();
+
+    const fd = new FormData();
+    fd.set("tree_id", thread.treeId);
+    fd.set("photo", compressed, "photo.jpg");
+    const result = await sendPhotoMessage({ error: null }, fd);
+    setIsUploadingPhoto(false);
+
+    if (result.error) {
+      setSendError(result.error);
+      setLocalMessages((prev) => prev.filter((m) => m.id !== optimisticId));
+      URL.revokeObjectURL(previewUrl);
+      return;
+    }
+
+    // Swap optimistic placeholder with the persisted row so the realtime echo
+    // de-dupes by id-match.
+    if (result.message) {
+      const real = result.message;
+      setLocalMessages((prev) =>
+        prev.map((m) => {
+          if (m.id !== optimisticId) return m;
+          URL.revokeObjectURL(previewUrl);
+          return { ...m, id: real.id, photoUrl: real.photoUrl };
+        }),
+      );
+    }
   }
 
   return (
@@ -282,51 +525,38 @@ export function MessageThread({
             padding: 12,
           }}
         >
-          {showAttach && (
-            <div
-              style={{
-                padding: 10,
-                marginBottom: 10,
-                background: "var(--paper)",
-                border: "1px dashed var(--moss)",
-                borderRadius: 10,
-              }}
-            >
-              <div className="eyebrow" style={{ marginBottom: 8 }}>
-                Attach
-              </div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button className="btn ghost sm" onClick={attachScreenshot}>
-                  📷 Payment screenshot
-                </button>
-                <button className="btn ghost sm">🌱 Photo</button>
-                <button
-                  className="btn ghost sm"
-                  onClick={() => setShowAttach(false)}
-                >
-                  cancel
-                </button>
-              </div>
-            </div>
+          {viewerRole === "farmer" && (
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={(e) => handlePhotoPick(e.target.files?.[0] ?? null)}
+              style={{ display: "none" }}
+            />
           )}
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <button
-              onClick={() => setShowAttach(!showAttach)}
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: "50%",
-                background: showAttach ? "var(--moss)" : "var(--paper)",
-                color: showAttach ? "var(--paper)" : "var(--ink)",
-                border: `1px solid ${showAttach ? "var(--moss)" : "var(--line)"}`,
-                cursor: "pointer",
-                fontSize: 18,
-                lineHeight: 1,
-              }}
-              title="Attach"
-            >
-              +
-            </button>
+            {viewerRole === "farmer" && (
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploadingPhoto}
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: "50%",
+                  background: "var(--paper)",
+                  color: "var(--ink)",
+                  border: "1px solid var(--line)",
+                  cursor: isUploadingPhoto ? "not-allowed" : "pointer",
+                  fontSize: 18,
+                  lineHeight: 1,
+                  opacity: isUploadingPhoto ? 0.5 : 1,
+                }}
+                title="Attach photo"
+              >
+                📷
+              </button>
+            )}
             <input
               className="input"
               placeholder={`Message ${farmer.name.split(" ")[0]}-ji…`}
@@ -335,17 +565,49 @@ export function MessageThread({
               onKeyDown={(e) => {
                 if (e.key === "Enter") send();
               }}
+              disabled={isPending}
               style={{ flex: 1 }}
             />
             <button
               className="btn moss sm"
               onClick={send}
               style={{ padding: "10px 16px" }}
-              disabled={!text.trim()}
+              disabled={!text.trim() || isPending}
             >
-              Send
+              {isPending ? "Sending…" : "Send"}
             </button>
           </div>
+          {isUploadingPhoto && (
+            <div
+              style={{
+                marginTop: 8,
+                fontFamily: "var(--font-mono)",
+                fontSize: 10,
+                color: "var(--moss)",
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+                textAlign: "center",
+              }}
+            >
+              uploading photo…
+            </div>
+          )}
+          {sendError && (
+            <div
+              style={{
+                marginTop: 8,
+                padding: "6px 10px",
+                fontSize: 12,
+                color: "var(--terra)",
+                background:
+                  "color-mix(in oklch, var(--terra-soft) 30%, var(--paper))",
+                border: "1px solid var(--terra)",
+                borderRadius: 6,
+              }}
+            >
+              {sendError}
+            </div>
+          )}
           <div
             style={{
               marginTop: 6,
@@ -386,10 +648,8 @@ export function ThreadPreview({
   const lastText =
     last.kind === "photo"
       ? "📷 Photo"
-      : last.kind === "milestone" ||
-          last.kind === "planting" ||
-          last.kind === "thread-open"
-        ? last.text
+      : last.kind === "payment-proof"
+        ? "💳 Payment proof"
         : last.text;
   const counterpart = role === "donor" ? farmer.name : thread.donor;
   const counterpartSub = role === "donor" ? farmer.village : `tree #${thread.treeId}`;

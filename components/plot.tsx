@@ -4,6 +4,299 @@ import React, { useMemo, type CSSProperties, type ReactNode } from "react";
 import type { Plot } from "@/lib/data";
 
 // ============================================================================
+// PlotLocator — cartographer's chart of Uttarakhand pinning the plot's
+// lat/lng. Different intent from PlotView (which shows the plot's local
+// terrain). This is the "where on earth" view; PlotView is "what the land
+// looks like up close." Both render entirely from data — no map tiles, no API.
+// ============================================================================
+
+export interface PlotLocatorProps {
+  // Caller must guarantee lat/lng are non-null before rendering.
+  plot: Plot & { lat: number; lng: number };
+  height?: number;
+}
+
+export function PlotLocator({ plot, height = 300 }: PlotLocatorProps) {
+  // Uttarakhand bounding box (approximate).
+  const LAT_MIN = 28.7;
+  const LAT_MAX = 31.4;
+  const LNG_MIN = 77.6;
+  const LNG_MAX = 81.0;
+  const W = 100;
+  const H = 80;
+
+  const pinX = ((plot.lng - LNG_MIN) / (LNG_MAX - LNG_MIN)) * W;
+  const pinY = ((LAT_MAX - plot.lat) / (LAT_MAX - LAT_MIN)) * H;
+
+  return (
+    <div
+      style={{
+        position: "relative",
+        width: "100%",
+        height,
+        background:
+          "linear-gradient(165deg, oklch(0.95 0.014 95) 0%, oklch(0.92 0.025 88) 65%, oklch(0.89 0.035 80) 100%)",
+        border: "1px solid var(--line)",
+        borderRadius: 10,
+        overflow: "hidden",
+      }}
+    >
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        preserveAspectRatio="xMidYMid meet"
+        width="100%"
+        height="100%"
+        style={{ position: "absolute", inset: 0 }}
+      >
+        <defs>
+          <pattern
+            id={`stipple-${plot.id}`}
+            width="2"
+            height="2"
+            patternUnits="userSpaceOnUse"
+          >
+            <circle
+              cx="1"
+              cy="1"
+              r="0.25"
+              fill="oklch(0.5 0.08 145)"
+              opacity="0.4"
+            />
+          </pattern>
+        </defs>
+
+        {/* Latitude grid lines */}
+        {[29, 30, 31].map((lat) => {
+          const gy = ((LAT_MAX - lat) / (LAT_MAX - LAT_MIN)) * H;
+          return (
+            <g key={`lat-${lat}`}>
+              <line
+                x1="0"
+                y1={gy}
+                x2={W}
+                y2={gy}
+                stroke="oklch(0.55 0.04 70)"
+                strokeWidth="0.12"
+                strokeDasharray="1 1.5"
+                opacity="0.45"
+              />
+              <text
+                x="1.5"
+                y={gy - 0.8}
+                fontFamily="ui-monospace, monospace"
+                fontSize="1.8"
+                fill="oklch(0.55 0.04 70)"
+                opacity="0.7"
+              >
+                {lat}°N
+              </text>
+            </g>
+          );
+        })}
+
+        {/* Longitude grid lines */}
+        {[78, 79, 80].map((lng) => {
+          const gx = ((lng - LNG_MIN) / (LNG_MAX - LNG_MIN)) * W;
+          return (
+            <g key={`lng-${lng}`}>
+              <line
+                x1={gx}
+                y1="0"
+                x2={gx}
+                y2={H}
+                stroke="oklch(0.55 0.04 70)"
+                strokeWidth="0.12"
+                strokeDasharray="1 1.5"
+                opacity="0.45"
+              />
+              <text
+                x={gx + 0.8}
+                y={H - 1.2}
+                fontFamily="ui-monospace, monospace"
+                fontSize="1.8"
+                fill="oklch(0.55 0.04 70)"
+                opacity="0.7"
+              >
+                {lng}°E
+              </text>
+            </g>
+          );
+        })}
+
+        {/* Uttarakhand outline */}
+        <path
+          d="M 6 32 Q 10 24, 20 20 L 32 13 Q 46 9, 58 11 L 72 10 Q 84 13, 90 20 L 93 30 Q 95 40, 91 52 L 86 62 Q 78 71, 64 73 L 44 75 Q 28 73, 18 66 L 10 56 Q 5 44, 6 32 Z"
+          fill={`url(#stipple-${plot.id})`}
+          fillOpacity="0.9"
+          stroke="oklch(0.42 0.085 145)"
+          strokeWidth="0.35"
+          strokeDasharray="0.7 0.5"
+        />
+
+        {/* Region labels */}
+        <text
+          x="50"
+          y="6"
+          fontFamily="ui-monospace, monospace"
+          fontSize="2.2"
+          textAnchor="middle"
+          fill="oklch(0.4 0.03 70)"
+          letterSpacing="0.5"
+          opacity="0.85"
+        >
+          — UTTARAKHAND —
+        </text>
+        <text
+          x="50"
+          y="78"
+          fontFamily="ui-monospace, monospace"
+          fontSize="1.7"
+          textAnchor="middle"
+          fill="oklch(0.5 0.03 70)"
+          letterSpacing="0.3"
+          opacity="0.7"
+        >
+          UTTAR PRADESH ↓
+        </text>
+        <text
+          x="3"
+          y="46"
+          fontFamily="ui-monospace, monospace"
+          fontSize="1.6"
+          fill="oklch(0.5 0.03 70)"
+          letterSpacing="0.3"
+          opacity="0.7"
+          transform="rotate(-90 3 46)"
+        >
+          ← HIMACHAL
+        </text>
+        <text
+          x="97"
+          y="46"
+          fontFamily="ui-monospace, monospace"
+          fontSize="1.6"
+          textAnchor="end"
+          fill="oklch(0.5 0.03 70)"
+          letterSpacing="0.3"
+          opacity="0.7"
+          transform="rotate(90 97 46)"
+        >
+          NEPAL →
+        </text>
+
+        {/* Crosshair at the pin */}
+        <line
+          x1="0"
+          y1={pinY}
+          x2={W}
+          y2={pinY}
+          stroke="oklch(0.6 0.13 45)"
+          strokeWidth="0.22"
+          strokeDasharray="0.5 0.7"
+          opacity="0.6"
+        />
+        <line
+          x1={pinX}
+          y1="0"
+          x2={pinX}
+          y2={H}
+          stroke="oklch(0.6 0.13 45)"
+          strokeWidth="0.22"
+          strokeDasharray="0.5 0.7"
+          opacity="0.6"
+        />
+
+        {/* Pin: outer halo + ring + solid dot */}
+        <circle cx={pinX} cy={pinY} r="3" fill="oklch(0.6 0.13 45)" opacity="0.18" />
+        <circle
+          cx={pinX}
+          cy={pinY}
+          r="1.9"
+          fill="none"
+          stroke="oklch(0.6 0.13 45)"
+          strokeWidth="0.5"
+        />
+        <circle cx={pinX} cy={pinY} r="0.9" fill="oklch(0.6 0.13 45)" />
+      </svg>
+
+      {/* Compass rose */}
+      <div
+        style={{
+          position: "absolute",
+          top: 12,
+          right: 12,
+          width: 36,
+          height: 36,
+          borderRadius: "50%",
+          background: "color-mix(in oklch, var(--paper) 75%, transparent)",
+          border: "1px solid color-mix(in oklch, var(--ink) 15%, transparent)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          fontFamily: "ui-monospace, monospace",
+          fontSize: 10,
+          color: "oklch(0.4 0.03 70)",
+        }}
+      >
+        <div style={{ fontWeight: 600, lineHeight: 1 }}>N</div>
+        <div style={{ lineHeight: 1, fontSize: 12, marginTop: -1 }}>↑</div>
+      </div>
+
+      {/* Coordinate readout */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: 14,
+          left: 16,
+          padding: "10px 14px",
+          background: "color-mix(in oklch, var(--paper) 88%, transparent)",
+          border: "1px solid color-mix(in oklch, var(--ink) 15%, transparent)",
+          borderLeft: "2px solid var(--terra)",
+          borderRadius: 6,
+          backdropFilter: "blur(2px)",
+        }}
+      >
+        <div
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: 9,
+            letterSpacing: "0.16em",
+            textTransform: "uppercase",
+            color: "var(--muted)",
+            marginBottom: 4,
+          }}
+        >
+          your tree · exact coordinates
+        </div>
+        <div
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: 20,
+            lineHeight: 1.1,
+            fontStyle: "italic",
+            color: "var(--ink)",
+          }}
+        >
+          {plot.lat.toFixed(4)}° N
+        </div>
+        <div
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: 20,
+            lineHeight: 1.1,
+            fontStyle: "italic",
+            color: "var(--ink)",
+          }}
+        >
+          {plot.lng.toFixed(4)}° E
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
 // PlotView — hand-crafted top-down view of a single plot.
 // Deliberately NOT a satellite tile. Deterministic layout seeded from plot.id
 // so the SVG is stable across renders.
