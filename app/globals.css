@@ -134,6 +134,22 @@ button { font-family: inherit; cursor: pointer; }
   transform: rotate(-0.6deg);
 }
 
+/* phones: keep the top bar on one line (~58px) so the sticky offsets the /why
+   page assumes stay valid; over-budget nav links scroll horizontally instead
+   of wrapping the bar to 2–3 rows. */
+@media (max-width: 720px) {
+  .topbar-inner { padding: 10px 16px; gap: 12px; }
+  .nav-links {
+    flex: 1 1 auto; min-width: 0;
+    flex-wrap: nowrap; overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 16px;
+  }
+  .nav-links::-webkit-scrollbar { display: none; }
+  .nav-links a, .nav-links button { white-space: nowrap; }
+}
+
 .role-switch {
   margin-left: auto;
   display: inline-flex;
@@ -580,6 +596,187 @@ body.theme-dark {
   background: var(--moss);
   background-clip: padding-box;
   border: 2px solid transparent;
+}
+
+/* ---------- why page · scrollytelling (SVG + CSS + IntersectionObserver) ---------- */
+/* No JS animation runtime ships to phones: IntersectionObserver toggles .in /
+   .reveal classes and CSS does the rest. Everything degrades to a static,
+   fully-legible page under prefers-reduced-motion (block at the very end). */
+.why-page { overflow-x: clip; }
+
+/* reveal-on-scroll primitive */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 0.7s ease,
+    transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+  transition-delay: var(--reveal-delay, 0s);
+}
+.reveal.in { opacity: 1; transform: none; }
+
+/* hero scroll cue */
+@keyframes why-bob {
+  0%, 100% { transform: translateY(0); opacity: 0.45; }
+  50% { transform: translateY(7px); opacity: 1; }
+}
+.why-cue { animation: why-bob 1.9s ease-in-out infinite; }
+
+/* the gap — a coin falls into a sealed box, then questions drift up */
+.why-stage { position: relative; }
+.why-coin { position: absolute; left: 50%; top: 56px; transform: translate(-50%, 0); }
+@keyframes why-coin-drop {
+  0%   { transform: translate(-50%, -120px) scale(0.85); opacity: 0; }
+  30%  { opacity: 1; }
+  60%  { transform: translate(-50%, 30px) scale(1); opacity: 1; }   /* meets the lid */
+  72%  { transform: translate(-50%, 18px) scale(1); }               /* small bounce */
+  100% { transform: translate(-50%, 56px) scale(0.6); opacity: 0; } /* slips inside */
+}
+.why-stage.in .why-coin {
+  animation: why-coin-drop 1.4s cubic-bezier(0.3, 0.05, 0.4, 1) 0.25s both;
+}
+.why-q { font-family: var(--font-display); font-style: italic; opacity: 0; }
+@keyframes why-q-float {
+  0%   { transform: translateY(10px) rotate(var(--r, 0deg)); opacity: 0; }
+  25%  { opacity: 0; }
+  55%  { opacity: 0.7; }
+  100% { transform: translateY(-54px) rotate(var(--r, 0deg)); opacity: 0; }
+}
+.why-stage.in .why-q {
+  /* settle after a couple of drifts rather than looping forever (WCAG 2.2.2) */
+  animation: why-q-float 3.4s ease-in-out 2;
+  animation-delay: var(--qd, 0s);
+}
+
+/* the turn — the lid swings open on its hinge */
+.why-lid { transform-box: fill-box; transform-origin: left bottom; }
+@keyframes why-lid-open { to { transform: rotate(-28deg); } }
+.why-stage.in .why-lid {
+  animation: why-lid-open 1s cubic-bezier(0.34, 1.3, 0.5, 1) 0.2s both;
+}
+
+/* the turn — dark panel, splits text + opening box; stacks on phones */
+.why-turn {
+  display: grid;
+  grid-template-columns: 1.3fr 0.7fr;
+  gap: 32px;
+  align-items: center;
+}
+@media (max-width: 760px) {
+  .why-turn { grid-template-columns: 1fr; gap: 24px; }
+}
+
+/* follow the money — a coin runs straight from you to the farmer */
+.why-flow-row {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr 1fr;
+  align-items: center;
+  gap: 18px;
+}
+.why-flow-node {
+  text-align: center;
+  padding: 18px;
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.why-flow-track { position: relative; height: 44px; }
+.why-flow-line {
+  position: absolute; left: 0; right: 0; top: 50%;
+  border-top: 2px dashed var(--line-2);
+}
+.why-flow-coin { position: absolute; top: 50%; transform: translate(-50%, -50%); opacity: 0; }
+@keyframes why-travel {
+  0%   { left: 0%;   opacity: 0; }
+  12%  { opacity: 1; }
+  88%  { opacity: 1; }
+  100% { left: 100%; opacity: 0; }
+}
+.why-stage.in .why-flow-coin {
+  /* a couple of passes makes the point, then the wire rests (WCAG 2.2.2) */
+  animation: why-travel 2.2s cubic-bezier(0.5, 0, 0.5, 1) 0.4s 2;
+}
+
+/* the proof — a sticky tree grows as captions scroll past its centre */
+.why-grow { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 56px; align-items: start; }
+.why-grow-viz { position: sticky; top: 84px; }
+.why-grow-steps { display: block; }
+.why-grow-step { min-height: 62vh; display: flex; align-items: center; }
+.why-grow-step:first-child { min-height: 42vh; }
+.why-grow-step:last-child { min-height: 48vh; }
+@keyframes why-pop {
+  0%   { transform: scale(0.94); opacity: 0.4; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.why-pop { animation: why-pop 0.6s cubic-bezier(0.34, 1.2, 0.5, 1) both; }
+
+@media (max-width: 900px) {
+  .why-grow { grid-template-columns: 1fr; gap: 0; }
+  .why-grow-viz {
+    position: sticky; top: 58px; z-index: 3;
+    background: var(--paper);
+    margin: 0 -32px;                 /* bleed to screen edges so captions slide under, not beside */
+    padding: 0 32px 14px;
+    border-bottom: 1px dotted var(--line-2);
+  }
+  /* keep the sticky tree short enough that the active caption clears it below */
+  .why-grow-viz .tree-viz { max-height: 38vh; }
+  .why-grow-step { min-height: 72vh; }
+}
+
+/* on phones the money flow turns vertical — you on top, the coin drops
+   straight down to the farmer — so the bank labels never get crushed. */
+@keyframes why-travel-v {
+  0%   { top: 0%;   opacity: 0; }
+  12%  { opacity: 1; }
+  88%  { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+@media (max-width: 620px) {
+  .why-flow-row { grid-template-columns: 1fr; gap: 0; justify-items: center; }
+  .why-flow-node { width: 100%; max-width: 280px; padding: 14px; }
+  .why-flow-track { width: 2px; height: 88px; }
+  .why-flow-line {
+    left: 50%; right: auto; top: 0; bottom: 0;
+    border-top: 0; border-left: 2px dashed var(--line-2);
+  }
+  .why-flow-coin { left: 50%; top: 0; }
+  .why-stage.in .why-flow-coin {
+    animation: why-travel-v 2.2s cubic-bezier(0.5, 0, 0.5, 1) 0.4s 2;
+  }
+}
+
+/* beat: two worlds — you (means, no time) vs the farmer (time, needs means) */
+.why-worlds { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: stretch; }
+@keyframes why-clock { to { transform: rotate(360deg); } }
+.why-clock-hand { transform-box: view-box; transform-origin: 28px 28px; }
+/* the long hand whirls a few times, then settles — finite, so no perpetual loop */
+.why-stage.in .why-clock-hand { animation: why-clock 1.2s linear 3 both; }
+@media (max-width: 620px) { .why-worlds { grid-template-columns: 1fr; } }
+
+/* beat: a reason to stay — the farmer's side, with the credit pinging in */
+.why-stay { display: grid; grid-template-columns: 0.85fr 1.15fr; gap: 32px; align-items: center; }
+@keyframes why-ping {
+  0%   { transform: scale(0.92); opacity: 0; }
+  60%  { transform: scale(1.03); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.why-stage.in .why-ping { animation: why-ping 0.7s cubic-bezier(0.34, 1.3, 0.5, 1) 0.15s both; }
+@media (max-width: 760px) { .why-stay { grid-template-columns: 1fr; gap: 22px; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+  .why-cue, .why-pop { animation: none; }
+  /* match the .why-stage.in activators (specificity 0,3,0) so the reset wins —
+     bare-class resets lose to them and the animations keep running. */
+  .why-stage.in .why-q,
+  .why-stage.in .why-lid,
+  .why-stage.in .why-flow-coin,
+  .why-stage.in .why-clock-hand,
+  .why-stage.in .why-ping { animation: none; }
+  .why-q { opacity: 0.55; }                       /* show the doubt statically */
+  .why-coin, .why-flow-coin { display: none; }    /* no coin left mid-air / mid-wire */
+  .why-lid { transform: rotate(-28deg); }         /* the box is simply already open */
 }
 
 /* ---------- tweaks panel (design exploration only) ---------- */

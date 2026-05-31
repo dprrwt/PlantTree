@@ -316,6 +316,100 @@ export function Landing({ navigate }: { navigate: (s: Screen) => void }) {
         </div>
       </section>
 
+      {/* WHERE DOES IT GO — emotional gateway into the Why page */}
+      <section className="shell" style={{ paddingTop: 24, paddingBottom: 16 }}>
+        <div
+          className="card"
+          style={{
+            background: "var(--paper-2)",
+            border: "1px solid var(--line-2)",
+            padding: 0,
+            overflow: "hidden",
+          }}
+        >
+          <div className="grid-2" style={{ gap: 0, alignItems: "stretch" }}>
+            {/* the question */}
+            <div style={{ padding: "44px 40px" }}>
+              <div className="eyebrow" style={{ marginBottom: 16 }}>
+                Before you give
+              </div>
+              <h2 style={{ marginBottom: 16 }}>
+                Where does your money
+                <br />
+                <em>actually</em> go?
+              </h2>
+              <p style={{ color: "var(--ink-2)", maxWidth: 460, marginBottom: 14 }}>
+                Give to most charities and it vanishes behind a wall — no photo,
+                no proof, no way to know a tree was ever planted.
+              </p>
+              <p style={{ color: "var(--ink-2)", maxWidth: 460, marginBottom: 26 }}>
+                Here, every rupee goes <strong>straight to a farmer</strong>, and
+                you watch your tree grow — in dated photos — for the next twenty
+                years.
+              </p>
+              <button className="btn moss" onClick={() => navigate("why")}>
+                See exactly where it goes <span className="arrow">→</span>
+              </button>
+            </div>
+
+            {/* the doubt — the questions you never get to ask (previews /why) */}
+            <div
+              style={{
+                background:
+                  "color-mix(in oklch, var(--paper-3) 70%, var(--paper))",
+                padding: "40px 36px",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                gap: 18,
+              }}
+            >
+              <div
+                aria-hidden
+                style={{
+                  fontFamily: "var(--font-display)",
+                  fontSize: 72,
+                  lineHeight: 0.8,
+                  color: "var(--line-2)",
+                }}
+              >
+                ?
+              </div>
+              <div className="col" style={{ gap: 10 }}>
+                {[
+                  "Did a tree actually get planted?",
+                  "Is it still alive — or already dead?",
+                  "Or did my money just… vanish?",
+                ].map((q) => (
+                  <div
+                    key={q}
+                    style={{
+                      fontFamily: "var(--font-display)",
+                      fontStyle: "italic",
+                      fontSize: 18,
+                      color: "var(--ink-2)",
+                    }}
+                  >
+                    {q}
+                  </div>
+                ))}
+              </div>
+              <div
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: 11,
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  color: "var(--muted)",
+                }}
+              >
+                the questions you never get to ask
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* HOW IT WORKS — short teaser */}
       <section className="shell" style={{ paddingTop: 72, paddingBottom: 32 }}>
         <div
@@ -442,6 +536,13 @@ export function Landing({ navigate }: { navigate: (s: Screen) => void }) {
                 write-off, use a registered NGO. If you want every rupee to
                 reach the soil, use us.
               </p>
+              <button
+                className="btn ghost sm"
+                style={{ marginTop: 22 }}
+                onClick={() => navigate("why")}
+              >
+                Why we don&apos;t take your money <span className="arrow">→</span>
+              </button>
             </div>
             <div
               style={{
@@ -1044,7 +1145,16 @@ export function Landing({ navigate }: { navigate: (s: Screen) => void }) {
             </div>
             <div className="col" style={{ gap: 6, fontSize: 13 }}>
               <a className="link">How it works</a>
-              <a className="link">Why we don&apos;t take your money</a>
+              <a
+                className="link"
+                href="/why"
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate("why");
+                }}
+              >
+                Why we don&apos;t take your money
+              </a>
               <a className="link">Verification process</a>
               <a className="link">Mistakes we&apos;ve made</a>
             </div>

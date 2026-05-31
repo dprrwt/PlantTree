@@ -8,7 +8,7 @@ import { Logo } from "@/components/shared";
 export function PublicTopBar({
   active,
 }: {
-  active?: "contribute" | "groves" | "scale";
+  active?: "contribute" | "groves" | "scale" | "why";
 }) {
   return (
     <div className="topbar">
@@ -24,6 +24,9 @@ export function PublicTopBar({
           {/* Links are the navigable elements directly — never <button> inside
               <Link>, which would render invalid <a><button> nesting. */}
           <Link href="/">Home</Link>
+          <Link href="/why" className={active === "why" ? "active" : ""}>
+            Why
+          </Link>
           <Link href="/groves" className={active === "groves" ? "active" : ""}>
             Public groves
           </Link>

@@ -2,6 +2,7 @@ export type Screen =
   | "home"
   | "where"
   | "how"
+  | "why"
   | "browse"
   | "pick"
   | "contribute"

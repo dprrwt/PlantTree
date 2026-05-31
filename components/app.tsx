@@ -5,6 +5,7 @@ import { Logo } from "./shared";
 import { Landing } from "./screens/landing";
 import { Where } from "./screens/where";
 import { How } from "./screens/how";
+import { Why } from "./screens/why";
 import { Picker } from "./screens/picker";
 import { Contribute } from "./screens/contribute";
 import { Scale } from "./screens/scale";
@@ -157,6 +158,12 @@ function TopBar({
                 How it works
               </button>
               <button
+                onClick={() => navigate("why")}
+                className={screen === "why" ? "active" : ""}
+              >
+                Why
+              </button>
+              <button
                 onClick={() => navigate("browse")}
                 className={screen === "browse" ? "active" : ""}
               >
@@ -247,6 +254,23 @@ export function App() {
     window.location.replace(target);
   }, []);
 
+  // Deep-link into a visitor screen via ?screen= — used by the standalone /why
+  // page's "Meet a farmer" CTA, which can't call navigate() across the route.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const s = new URLSearchParams(window.location.search).get("screen");
+    const allowed: Screen[] = [
+      "home",
+      "where",
+      "how",
+      "why",
+      "browse",
+      "contribute",
+      "scale",
+    ];
+    if (s && (allowed as string[]).includes(s)) setScreen(s as Screen);
+  }, []);
+
   function navigate(s: Screen) {
     setScreen(s);
     if (typeof window !== "undefined") {
@@ -265,6 +289,7 @@ export function App() {
       {screen === "home" && <Landing navigate={navigate} />}
       {screen === "where" && <Where navigate={navigate} />}
       {screen === "how" && <How navigate={navigate} />}
+      {screen === "why" && <Why navigate={navigate} />}
       {(screen === "browse" || screen === "pick") && (
         <Picker navigate={navigate} />
       )}
@@ -346,6 +371,15 @@ export function App() {
             }}
           >
             How it works
+          </TweakButton>
+          <div style={{ height: 6 }}></div>
+          <TweakButton
+            onClick={() => {
+              setRole("visitor");
+              navigate("why");
+            }}
+          >
+            Why
           </TweakButton>
           <div style={{ height: 6 }}></div>
           <TweakButton
