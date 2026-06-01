@@ -134,20 +134,60 @@ button { font-family: inherit; cursor: pointer; }
   transform: rotate(-0.6deg);
 }
 
-/* phones: keep the top bar on one line (~58px) so the sticky offsets the /why
-   page assumes stay valid; over-budget nav links scroll horizontally instead
-   of wrapping the bar to 2–3 rows. */
+/* mobile nav: collapse the inline links + prototype role-switch into a
+   hamburger + dropdown sheet so the menu is actually reachable on phones.
+   The closed bar stays one line (~58px) so the /why sticky offsets hold. */
+.nav-toggle { display: none; }
+.nav-sheet { display: none; }
+
+@media (max-width: 900px) {
+  .nav-links,
+  .topbar-inner > .role-switch { display: none; }
+
+  .nav-toggle {
+    display: inline-flex; align-items: center; justify-content: center;
+    margin-left: auto;
+    width: 40px; height: 40px; padding: 0;
+    border: 1px solid var(--line); border-radius: 10px;
+    background: var(--paper-2); color: var(--ink);
+  }
+  .nav-toggle:hover { background: var(--paper-3); }
+
+  .nav-sheet {
+    display: flex; flex-direction: column;
+    padding: 6px 20px 16px;
+    border-top: 1px solid var(--line);
+    background: color-mix(in oklch, var(--paper) 94%, transparent);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+  }
+  .nav-sheet-link {
+    appearance: none; border: 0; background: none;
+    width: 100%; text-align: left;
+    padding: 13px 6px;
+    font-family: var(--font-body); font-size: 16px; color: var(--ink-2);
+    border-bottom: 1px dotted var(--line-2);
+  }
+  .nav-sheet-link:last-of-type { border-bottom: 0; }
+  .nav-sheet-link.active { color: var(--ink); }
+  .nav-sheet-link.active::before {
+    content: "›"; color: var(--moss); font-weight: 700; margin-right: 8px;
+  }
+
+  .nav-sheet-roles {
+    display: flex; flex-direction: column; gap: 8px;
+    margin-top: 12px; padding-top: 14px;
+    border-top: 1px solid var(--line);
+  }
+  .nav-sheet-roles-label {
+    font-family: var(--font-mono); font-size: 10px;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+  }
+  .role-switch-sheet { flex-wrap: wrap; align-self: flex-start; }
+}
+
 @media (max-width: 720px) {
   .topbar-inner { padding: 10px 16px; gap: 12px; }
-  .nav-links {
-    flex: 1 1 auto; min-width: 0;
-    flex-wrap: nowrap; overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    gap: 16px;
-  }
-  .nav-links::-webkit-scrollbar { display: none; }
-  .nav-links a, .nav-links button { white-space: nowrap; }
 }
 
 .role-switch {
@@ -374,6 +414,65 @@ button { font-family: inherit; cursor: pointer; }
   .scale-band { grid-template-columns: 1fr; }
   .scale-phase-col-left { border-right: 0; border-bottom: 1px dashed var(--line-2); }
   .scale-ops-stack { grid-template-columns: 1fr 1fr; }
+}
+
+/* landing page — responsive layout helpers
+   (mobile-first: in production both donors and farmers are phone-only).
+   The exported design only ships the 900px grid collapse, so these extend
+   the same vocabulary rather than invent a new one. */
+
+/* clip the hand-rotated, slightly-overhanging hero art so it never spawns a
+   horizontal scrollbar on phones */
+.landing { overflow-x: clip; }
+
+.hero-grid { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 56px; align-items: center; }
+.hero-cta { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.hero-stats { display: flex; gap: 28px; flex-wrap: wrap; color: var(--muted); font-size: 13px; }
+.hero-stat-rule { width: 1px; background: var(--line); align-self: stretch; }
+.hero-art { position: relative; }
+.hero-quote-card {
+  position: absolute; bottom: -32px; left: -28px; z-index: 3;
+  width: 240px; transform: rotate(-2deg);
+}
+
+.split-2 { display: grid; grid-template-columns: 1fr 1fr; }
+.split-2-right { border-left: 1px dashed var(--line-2); }
+.science-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 48px; align-items: center; }
+.science-axes { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.cta-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 40px; align-items: center; }
+.footer-grid { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 32px; }
+
+/* let the 1fr tracks shrink below their content's min-content when stacked on
+   phones — without this, the hero tree card (an aspect-ratio TreeViz with a
+   fixed height) reports a ~358px min-width and blows past a 360px screen. */
+.hero-grid > *,
+.science-grid > *,
+.cta-grid > *,
+.split-2 > * { min-width: 0; }
+
+/* fluid inner padding for the split panels — shrinks proportionally on phones
+   without needing its own breakpoint */
+.panel-pad { padding: clamp(28px, 4vw, 48px) clamp(22px, 3.5vw, 44px); }
+.cta-pad { padding: clamp(32px, 5vw, 64px) clamp(24px, 4.5vw, 56px); }
+
+/* stack the two-column blocks at the same point as the .grid-* utilities */
+@media (max-width: 900px) {
+  .hero-grid,
+  .science-grid,
+  .cta-grid { grid-template-columns: 1fr; gap: 40px; }
+  .split-2 { grid-template-columns: 1fr; }
+  .split-2-right { border-left: 0; border-top: 1px dashed var(--line-2); }
+  .footer-grid { grid-template-columns: 1fr 1fr; gap: 28px; }
+}
+
+/* phone polish: tighter gutters, full-width tap targets, no orphan hairlines */
+@media (max-width: 720px) {
+  .shell { padding: 0 20px; }
+  .section { padding: 60px 0; }
+  .hero-cta { gap: 10px; }
+  .hero-cta .btn { flex: 1 1 100%; justify-content: center; }
+  .hero-stat-rule { display: none; }
+  .hero-quote-card { left: 0; bottom: -22px; width: min(240px, 80%); }
 }
 
 /* stat block */

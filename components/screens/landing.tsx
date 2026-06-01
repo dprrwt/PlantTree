@@ -17,17 +17,10 @@ export function Landing({ navigate }: { navigate: (s: Screen) => void }) {
   const farmers = useFarmers() ?? [];
 
   return (
-    <div>
+    <div className="landing">
       {/* HERO */}
       <section className="shell" style={{ paddingTop: 56, paddingBottom: 64 }}>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1.15fr 0.85fr",
-            gap: 56,
-            alignItems: "center",
-          }}
-        >
+        <div className="hero-grid">
           <div>
             <div
               style={{
@@ -96,7 +89,7 @@ export function Landing({ navigate }: { navigate: (s: Screen) => void }) {
                 touch it.
               </span>
             </div>
-            <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+            <div className="hero-cta">
               <button className="btn moss" onClick={() => navigate("browse")}>
                 Choose a farmer <span className="arrow">→</span>
               </button>
@@ -109,16 +102,7 @@ export function Landing({ navigate }: { navigate: (s: Screen) => void }) {
                 See a donor&apos;s grove
               </button>
             </div>
-            <div
-              style={{
-                marginTop: 36,
-                display: "flex",
-                gap: 28,
-                color: "var(--muted)",
-                fontSize: 13,
-                flexWrap: "wrap",
-              }}
-            >
+            <div className="hero-stats" style={{ marginTop: 36 }}>
               <div>
                 <div
                   style={{
@@ -140,7 +124,7 @@ export function Landing({ navigate }: { navigate: (s: Screen) => void }) {
                   direct to farmer
                 </div>
               </div>
-              <div style={{ width: 1, background: "var(--line)" }}></div>
+              <div className="hero-stat-rule"></div>
               <div>
                 <div
                   style={{
@@ -162,7 +146,7 @@ export function Landing({ navigate }: { navigate: (s: Screen) => void }) {
                   species only
                 </div>
               </div>
-              <div style={{ width: 1, background: "var(--line)" }}></div>
+              <div className="hero-stat-rule"></div>
               <div>
                 <div
                   style={{
@@ -188,7 +172,7 @@ export function Landing({ navigate }: { navigate: (s: Screen) => void }) {
           </div>
 
           {/* hero illustration: tree growing card */}
-          <div style={{ position: "relative" }}>
+          <div className="hero-art">
             <div style={{ position: "absolute", top: -18, right: -10, zIndex: 2 }}>
               <Stamp color="var(--moss)" rotation={4}>
                 verified planting
@@ -261,15 +245,9 @@ export function Landing({ navigate }: { navigate: (s: Screen) => void }) {
               </div>
             </div>
             <div
-              className="card"
+              className="card hero-quote-card"
               style={{
-                position: "absolute",
-                bottom: -32,
-                left: -28,
-                zIndex: 3,
                 padding: "14px 16px",
-                transform: "rotate(-2deg)",
-                width: 240,
                 background: "var(--paper)",
                 boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
               }}
@@ -329,7 +307,7 @@ export function Landing({ navigate }: { navigate: (s: Screen) => void }) {
         >
           <div className="grid-2" style={{ gap: 0, alignItems: "stretch" }}>
             {/* the question */}
-            <div style={{ padding: "44px 40px" }}>
+            <div className="panel-pad">
               <div className="eyebrow" style={{ marginBottom: 16 }}>
                 Before you give
               </div>
@@ -354,10 +332,10 @@ export function Landing({ navigate }: { navigate: (s: Screen) => void }) {
 
             {/* the doubt — the questions you never get to ask (previews /why) */}
             <div
+              className="panel-pad"
               style={{
                 background:
                   "color-mix(in oklch, var(--paper-3) 70%, var(--paper))",
-                padding: "40px 36px",
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "center",
@@ -507,8 +485,8 @@ export function Landing({ navigate }: { navigate: (s: Screen) => void }) {
             border: "1px solid var(--line-2)",
           }}
         >
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
-            <div style={{ padding: "48px 44px" }}>
+          <div className="split-2">
+            <div className="panel-pad">
               <div className="eyebrow" style={{ marginBottom: 18 }}>
                 The direct model
               </div>
@@ -545,9 +523,8 @@ export function Landing({ navigate }: { navigate: (s: Screen) => void }) {
               </button>
             </div>
             <div
+              className="split-2-right panel-pad"
               style={{
-                borderLeft: "1px dashed var(--line-2)",
-                padding: "48px 44px",
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "center",
@@ -637,14 +614,7 @@ export function Landing({ navigate }: { navigate: (s: Screen) => void }) {
 
       {/* RIGHT TREE RIGHT PLACE */}
       <section className="shell" style={{ paddingTop: 0, paddingBottom: 80 }}>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1.2fr",
-            gap: 48,
-            alignItems: "center",
-          }}
-        >
+        <div className="science-grid">
           <div>
             <div className="eyebrow" style={{ marginBottom: 14 }}>
               The science-first part
@@ -670,13 +640,7 @@ export function Landing({ navigate }: { navigate: (s: Screen) => void }) {
               Read the full methodology <span className="arrow">→</span>
             </button>
           </div>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 14,
-            }}
-          >
+          <div className="science-axes">
             {[
               ["Soil chemistry", "N · P · K · pH"],
               ["Rainfall pattern", "12-mo cycle"],
@@ -979,15 +943,11 @@ export function Landing({ navigate }: { navigate: (s: Screen) => void }) {
       {/* CTA */}
       <section className="shell" style={{ paddingTop: 16, paddingBottom: 80 }}>
         <div
+          className="cta-grid cta-pad"
           style={{
             background: "var(--ink)",
             color: "var(--paper)",
             borderRadius: "var(--radius-lg)",
-            padding: "64px 56px",
-            display: "grid",
-            gridTemplateColumns: "1.4fr 1fr",
-            gap: 40,
-            alignItems: "center",
             position: "relative",
             overflow: "hidden",
           }}
@@ -1113,13 +1073,7 @@ export function Landing({ navigate }: { navigate: (s: Screen) => void }) {
 
       {/* FOOTER */}
       <footer className="shell footer">
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1.5fr 1fr 1fr 1fr",
-            gap: 32,
-          }}
-        >
+        <div className="footer-grid">
           <div>
             <Logo />
             <p style={{ marginTop: 14, fontSize: 13, maxWidth: 300 }}>

@@ -109,6 +109,55 @@ function applyTweaks(t: Tweaks) {
   root.style.setProperty("--font-display", FONTS[t.displayFont] || FONTS["Instrument Serif"]);
 }
 
+const NAV_LINKS: { screen: Screen; label: string }[] = [
+  { screen: "home", label: "Home" },
+  { screen: "where", label: "Where we plant" },
+  { screen: "how", label: "How it works" },
+  { screen: "why", label: "Why" },
+  { screen: "browse", label: "Farmers" },
+  { screen: "contribute", label: "Contribute" },
+  { screen: "scale", label: "Built to scale" },
+];
+
+function RoleSwitch({
+  role,
+  setRole,
+  navigate,
+  onPick,
+  className,
+}: {
+  role: Role;
+  setRole: (r: Role) => void;
+  navigate: (s: Screen) => void;
+  onPick?: () => void;
+  className?: string;
+}) {
+  const goExternal = (href: string) => {
+    if (typeof window !== "undefined") window.location.href = href;
+    onPick?.();
+  };
+  return (
+    <div
+      className={`role-switch${className ? " " + className : ""}`}
+      title="Prototype-only: preview the same site from 4 viewpoints"
+    >
+      <button
+        onClick={() => {
+          setRole("visitor");
+          navigate("home");
+          onPick?.();
+        }}
+        className={role === "visitor" ? "active" : ""}
+      >
+        visitor
+      </button>
+      <button onClick={() => goExternal("/donor")}>donor</button>
+      <button onClick={() => goExternal("/farmer")}>farmer</button>
+      <button onClick={() => goExternal("/admin")}>operator</button>
+    </div>
+  );
+}
+
 function TopBar({
   screen,
   navigate,
@@ -120,11 +169,16 @@ function TopBar({
   role: Role;
   setRole: (r: Role) => void;
 }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
     <div className="topbar">
       <div className="topbar-inner">
         <button
-          onClick={() => navigate("home")}
+          onClick={() => {
+            navigate("home");
+            setMenuOpen(false);
+          }}
           style={{
             background: "none",
             border: 0,
@@ -136,96 +190,86 @@ function TopBar({
         >
           <Logo />
         </button>
+
         <div className="nav-links">
-          {role === "visitor" && (
-            <>
+          {role === "visitor" &&
+            NAV_LINKS.map((l) => (
               <button
-                onClick={() => navigate("home")}
-                className={screen === "home" ? "active" : ""}
+                key={l.screen}
+                onClick={() => navigate(l.screen)}
+                className={screen === l.screen ? "active" : ""}
               >
-                Home
+                {l.label}
               </button>
-              <button
-                onClick={() => navigate("where")}
-                className={screen === "where" ? "active" : ""}
-              >
-                Where we plant
-              </button>
-              <button
-                onClick={() => navigate("how")}
-                className={screen === "how" ? "active" : ""}
-              >
-                How it works
-              </button>
-              <button
-                onClick={() => navigate("why")}
-                className={screen === "why" ? "active" : ""}
-              >
-                Why
-              </button>
-              <button
-                onClick={() => navigate("browse")}
-                className={screen === "browse" ? "active" : ""}
-              >
-                Farmers
-              </button>
-              <button
-                onClick={() => navigate("contribute")}
-                className={screen === "contribute" ? "active" : ""}
-              >
-                Contribute
-              </button>
-              <button
-                onClick={() => navigate("scale")}
-                className={screen === "scale" ? "active" : ""}
-              >
-                Built to scale
-              </button>
-            </>
-          )}
+            ))}
         </div>
-        <div
-          className="role-switch"
-          title="Prototype-only: preview the same site from 4 viewpoints"
+
+        <RoleSwitch role={role} setRole={setRole} navigate={navigate} />
+
+        <button
+          className="nav-toggle"
+          aria-label={menuOpen ? "Close menu" : "Open menu"}
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen((v) => !v)}
         >
-          <button
-            onClick={() => {
-              setRole("visitor");
-              navigate("home");
-            }}
-            className={role === "visitor" ? "active" : ""}
-          >
-            visitor
-          </button>
-          <button
-            onClick={() => {
-              if (typeof window !== "undefined") {
-                window.location.href = "/donor";
-              }
-            }}
-          >
-            donor
-          </button>
-          <button
-            onClick={() => {
-              if (typeof window !== "undefined") {
-                window.location.href = "/farmer";
-              }
-            }}
-          >
-            farmer
-          </button>
-          <button
-            onClick={() => {
-              if (typeof window !== "undefined") {
-                window.location.href = "/admin";
-              }
-            }}
-          >
-            operator
-          </button>
-        </div>
+          {menuOpen ? (
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              aria-hidden
+            >
+              <path d="M5 5l10 10M15 5L5 15" />
+            </svg>
+          ) : (
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              aria-hidden
+            >
+              <path d="M3 6h14M3 10h14M3 14h14" />
+            </svg>
+          )}
+        </button>
       </div>
+
+      {menuOpen && (
+        <nav className="nav-sheet">
+          {NAV_LINKS.map((l) => (
+            <button
+              key={l.screen}
+              className={`nav-sheet-link${
+                screen === l.screen && role === "visitor" ? " active" : ""
+              }`}
+              onClick={() => {
+                navigate(l.screen);
+                setMenuOpen(false);
+              }}
+            >
+              {l.label}
+            </button>
+          ))}
+          <div className="nav-sheet-roles">
+            <span className="nav-sheet-roles-label">Preview as</span>
+            <RoleSwitch
+              role={role}
+              setRole={setRole}
+              navigate={navigate}
+              onPick={() => setMenuOpen(false)}
+              className="role-switch-sheet"
+            />
+          </div>
+        </nav>
+      )}
     </div>
   );
 }

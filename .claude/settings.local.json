@@ -32,7 +32,14 @@
       "Bash(curl -s -o .why-3000.html -w \"%{http_code}\" \"http://localhost:3000/why\")",
       "Bash(curl -s -o .chk.html -w \"HTTP %{http_code}\\\\n\" \"http://localhost:3000/why\")",
       "Bash(curl -s -o .why.html -w \"/why HTTP %{http_code}\\\\n\" \"http://localhost:3000/why\")",
-      "Bash(curl -s -o .home.html -w \"home HTTP %{http_code}\\\\n\" \"http://localhost:3000/\")"
+      "Bash(curl -s -o .home.html -w \"home HTTP %{http_code}\\\\n\" \"http://localhost:3000/\")",
+      "Bash(git -C \"h:/CodingWorkspace/1 Working/PlantTree\" diff -- components/screens/landing.tsx app/globals.css)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3100)",
+      "Bash(node _diag.mjs)",
+      "PowerShell($c = Get-NetTCPConnection -LocalPort 3100 -State Listen -ErrorAction SilentlyContinue; if \\($c\\) { $c.OwningProcess | Select-Object -Unique | ForEach-Object { try { Stop-Process -Id $_ -Force -ErrorAction Stop; \"killed PID $_\" } catch {} } } else { \"no listener on 3100\" })",
+      "Bash(node _shots.mjs)",
+      "Bash(rm -f _diag.mjs _shots.mjs)",
+      "Bash(ls _*.mjs)"
     ]
   }
 }
