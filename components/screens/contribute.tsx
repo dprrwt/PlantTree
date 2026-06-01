@@ -544,13 +544,7 @@ export function Contribute({ navigate }: { navigate?: (s: Screen) => void }) {
                       />
                       {showErr("orgName")}
                     </div>
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "1fr 1fr",
-                        gap: 12,
-                      }}
-                    >
+                    <div className="split-2" style={{ gap: 12 }}>
                       <div>
                         <label
                           className="eyebrow"
@@ -633,13 +627,7 @@ export function Contribute({ navigate }: { navigate?: (s: Screen) => void }) {
                 </div>
               )}
 
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: 14,
-                }}
-              >
+              <div className="split-2" style={{ gap: 14 }}>
                 <div>
                   <label
                     className="eyebrow"
@@ -681,13 +669,7 @@ export function Contribute({ navigate }: { navigate?: (s: Screen) => void }) {
               Where is it?
             </div>
             <div className="col" style={{ gap: 14 }}>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: 14,
-                }}
-              >
+              <div className="split-2" style={{ gap: 14 }}>
                 <div>
                   <label
                     className="eyebrow"
@@ -782,13 +764,7 @@ export function Contribute({ navigate }: { navigate?: (s: Screen) => void }) {
                 </span>
               </div>
               <div className="col" style={{ gap: 14 }}>
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: 14,
-                  }}
-                >
+                <div className="split-2" style={{ gap: 14 }}>
                   <div>
                     <label
                       className="eyebrow"

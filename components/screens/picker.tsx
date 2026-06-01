@@ -203,17 +203,10 @@ export function Picker({ navigate }: { navigate: (s: Screen) => void }) {
         </div>
       </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1.05fr 1fr",
-          gap: 28,
-          marginTop: 28,
-          alignItems: "start",
-        }}
-      >
-        <div style={{ position: "sticky", top: 88 }}>
+      <div className="picker-list" style={{ marginTop: 28 }}>
+        <div className="picker-rail">
           <UttarakhandMap
+            className="picker-map"
             pins={districts}
             selected={selectedDistrict}
             onSelect={(id) =>
@@ -476,14 +469,7 @@ function FarmerProfile({
         ← All farmers
       </button>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1.4fr 1fr",
-          gap: 36,
-          alignItems: "start",
-        }}
-      >
+      <div className="picker-wide">
         <div>
           <div
             style={{
@@ -584,14 +570,7 @@ function FarmerProfile({
             >
               {district.why}
             </p>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr 1fr",
-                gap: 18,
-                marginTop: 22,
-              }}
-            >
+            <div className="grid-3" style={{ marginTop: 22 }}>
               <div>
                 <div className="eyebrow" style={{ marginBottom: 4 }}>
                   Soil
@@ -644,7 +623,7 @@ function FarmerProfile({
           </div>
         </div>
 
-        <div style={{ position: "sticky", top: 88 }}>
+        <div className="picker-rail">
           <div className="card frame" style={{ padding: 22, position: "relative" }}>
             <div style={{ position: "absolute", top: -10, right: 16 }}>
               <Stamp color="var(--moss)" rotation={3}>
@@ -1101,14 +1080,7 @@ function PayFlow({
         ← Back to {farmer.name.split(" ")[0]}&apos;s profile
       </button>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 40,
-          alignItems: "start",
-        }}
-      >
+      <div className="picker-even">
         <div>
           <div className="eyebrow" style={{ marginBottom: 12 }}>
             Step 1 of 2 · pay {farmer.name.split(" ")[0]}-ji
@@ -1276,7 +1248,7 @@ function PayFlow({
           </div>
         </div>
 
-        <div style={{ position: "sticky", top: 88 }}>
+        <div className="picker-rail">
           <div className="card frame" style={{ padding: 24 }}>
             <div className="eyebrow" style={{ marginBottom: 12 }}>
               Step 2 of 2 · tell us you paid
@@ -1558,14 +1530,7 @@ function ThreadSuccess({
         </p>
       </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1.4fr 1fr",
-          gap: 28,
-          alignItems: "start",
-        }}
-      >
+      <div className="picker-wide" style={{ gap: 28 }}>
         <div>
           <MessageThread
             thread={initialThread}

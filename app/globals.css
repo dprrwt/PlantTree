@@ -527,6 +527,32 @@ button { font-family: inherit; cursor: pointer; }
   .how-step-body { padding: 28px 20px; }
 }
 
+/* "farmers" (picker) flows — list, profile, pay, success layouts + sticky rails */
+.picker-list { display: grid; grid-template-columns: 1.05fr 1fr; gap: 28px; align-items: start; }
+.picker-wide { display: grid; grid-template-columns: 1.4fr 1fr; gap: 36px; align-items: start; }
+.picker-even { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+.picker-rail { position: sticky; top: 88px; }
+.picker-list > *,
+.picker-wide > *,
+.picker-even > * { min-width: 0; }
+
+@media (max-width: 900px) {
+  .picker-list,
+  .picker-wide,
+  .picker-even { grid-template-columns: 1fr; gap: 28px; }
+  .picker-rail { position: static; }
+  .picker-map { max-height: 300px; }
+}
+
+/* built-to-scale "what breaks" table — stack the 4-col rows on phones */
+.scale-breaks-row { grid-template-columns: 70px 90px 1.2fr 1.5fr; }
+@media (max-width: 720px) {
+  .scale-breaks-row { grid-template-columns: auto auto; gap: 4px 14px; }
+  .scale-breaks-row.head { display: none; }
+  .scale-breaks-row > :nth-child(3),
+  .scale-breaks-row > :nth-child(4) { grid-column: 1 / -1; }
+}
+
 /* stat block */
 .stat-num {
   font-family: var(--font-display);

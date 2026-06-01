@@ -453,14 +453,14 @@ export function Scale({ navigate }: { navigate?: (s: Screen) => void }) {
             </p>
           </div>
           <div className="col" style={{ gap: 0 }}>
-            <div className="list-row head" style={{ gridTemplateColumns: "70px 90px 1.2fr 1.5fr", borderBottom: "1px solid var(--line-2)" }}>
+            <div className="list-row head scale-breaks-row" style={{ borderBottom: "1px solid var(--line-2)" }}>
               <div>from</div>
               <div>to</div>
               <div>what breaks</div>
               <div>the redesign</div>
             </div>
             {BREAKS.map((b, i) => (
-              <div key={i} className="list-row" style={{ gridTemplateColumns: "70px 90px 1.2fr 1.5fr", alignItems: "start", padding: "18px 0" }}>
+              <div key={i} className="list-row scale-breaks-row" style={{ alignItems: "start", padding: "18px 0" }}>
                 <div style={{ fontFamily: "var(--font-display)", fontSize: 20, color: "var(--ink-2)" }}>{b.from}</div>
                 <div style={{ fontFamily: "var(--font-display)", fontSize: 20 }}>
                   <span style={{ color: "var(--muted)", marginRight: 6 }}>→</span>
