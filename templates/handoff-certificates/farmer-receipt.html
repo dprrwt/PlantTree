@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Acknowledgment · ₹{{amount}} · {{treeId}} · {{farmerName}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ========================================================================
+   PlantTree.life · Farmer Receipt · "Formal Acknowledgment"
+   Matches the donor botanical-plate style — a dignified, framable
+   acknowledgment of payment received. The farmer's mirror to the donor cert.
+   A4 portrait · 800×1131 px.
+   ======================================================================== */
+
+:root {
+  --paper:    oklch(0.965 0.012 82);
+  --paper-2:  oklch(0.935 0.022 78);
+  --paper-3:  oklch(0.895 0.028 76);
+  --ink:      oklch(0.22 0.018 60);
+  --ink-2:    oklch(0.36 0.022 60);
+  --muted:    oklch(0.52 0.022 65);
+  --line:     oklch(0.82 0.022 75);
+  --line-2:   oklch(0.74 0.028 70);
+  --moss:     oklch(0.42 0.085 145);
+  --moss-soft:oklch(0.86 0.045 140);
+  --terra:    oklch(0.6 0.13 45);
+  --terra-soft:oklch(0.88 0.05 55);
+
+  --font-display: "Instrument Serif", "Source Serif Pro", Georgia, serif;
+  --font-body:    "DM Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono:    "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: oklch(0.88 0.02 75);
+  font-family: var(--font-body);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "ss01", "cv11";
+}
+body { padding: 40px 20px; display: flex; justify-content: center; }
+
+.page {
+  width: 800px;
+  height: 1131px;
+  background: var(--paper);
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    0 30px 70px rgba(40,30,20,0.18),
+    0 6px 14px rgba(40,30,20,0.08);
+  background-image:
+    radial-gradient(circle at 22% 18%, rgba(0,0,0,0.025) 0, transparent 55%),
+    radial-gradient(circle at 80% 75%, rgba(0,0,0,0.03) 0, transparent 50%),
+    radial-gradient(circle at 50% 90%, rgba(120,80,30,0.04) 0, transparent 55%);
+}
+.page::before {
+  content: "";
+  position: absolute; inset: 0;
+  background-image:
+    repeating-linear-gradient(91deg, rgba(0,0,0,0.012) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(2deg,  rgba(0,0,0,0.010) 0 1px, transparent 1px 4px);
+  pointer-events: none;
+  mix-blend-mode: multiply;
+}
+
+/* ornamental frame matches the botanical plate cert */
+.frame {
+  position: absolute;
+  inset: 28px;
+  border: 1px solid var(--line-2);
+  pointer-events: none;
+}
+.frame::after {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border: 1px dotted var(--line-2);
+}
+.corner {
+  position: absolute;
+  width: 26px; height: 26px;
+  border: 1.5px solid var(--moss);
+  background: var(--paper);
+}
+.corner.tl { top: 22px;    left: 22px;    border-radius: 6px 0 6px 0; }
+.corner.tr { top: 22px;    right: 22px;   border-radius: 0 6px 0 6px; }
+.corner.bl { bottom: 22px; left: 22px;    border-radius: 0 6px 0 6px; }
+.corner.br { bottom: 22px; right: 22px;   border-radius: 6px 0 6px 0; }
+.corner::after {
+  content: "";
+  position: absolute; inset: 6px;
+  border: 1px solid var(--moss);
+  border-radius: inherit;
+  opacity: 0.5;
+}
+
+.inner {
+  position: relative;
+  padding: 64px 72px 60px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* head */
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 16px;
+  border-bottom: 1.5px dotted var(--line-2);
+}
+.brand {
+  display: flex; align-items: baseline; gap: 8px;
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: -0.01em;
+}
+.brand .dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--moss);
+  transform: translateY(-2px);
+}
+.brand .tld {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+}
+.meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  display: flex; gap: 14px; align-items: center;
+}
+.meta .pip {
+  width: 4px; height: 4px; border-radius: 50%;
+  background: var(--moss);
+  display: inline-block;
+}
+
+/* eyebrow */
+.eyebrow {
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--moss);
+  margin-top: 40px;
+}
+
+/* big "received" title */
+.title {
+  text-align: center;
+  margin-top: 6px;
+}
+.title h1 {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 132px;
+  line-height: 0.92;
+  letter-spacing: -0.025em;
+  font-weight: 400;
+  color: var(--ink);
+}
+.title h1 em {
+  font-style: italic;
+  color: var(--terra);
+}
+
+/* dedication line */
+.ded {
+  margin-top: 26px;
+  text-align: center;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 22px;
+  color: var(--ink-2);
+  max-width: 540px;
+  margin-left: auto; margin-right: auto;
+  line-height: 1.5;
+}
+
+/* huge amount block */
+.amount-block {
+  margin: 36px auto 0;
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 14px;
+}
+.amount-block .amt {
+  font-family: var(--font-display);
+  font-size: 152px;
+  line-height: 0.9;
+  letter-spacing: -0.035em;
+  color: var(--ink);
+}
+.amount-block .amt .sym {
+  color: var(--terra);
+}
+.amount-block .badge {
+  display: inline-block;
+  align-self: center;
+  transform: rotate(-4deg);
+  border: 2px solid var(--moss);
+  color: var(--moss);
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: color-mix(in oklch, var(--moss) 7%, transparent);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  text-align: center;
+  line-height: 1.4;
+}
+.amount-block .badge .big {
+  display: block;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 22px;
+  letter-spacing: 0;
+  text-transform: none;
+  margin: 2px 0;
+}
+
+.amount-words {
+  margin-top: 6px;
+  text-align: center;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 18px;
+  color: var(--muted);
+}
+
+/* ornamental rule */
+.split {
+  margin: 42px auto 0;
+  width: 80%;
+  display: flex; align-items: center; gap: 14px;
+}
+.split hr { flex: 1; border: 0; border-top: 1.5px dotted var(--line-2); }
+.split .mk {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 22px;
+  color: var(--moss);
+}
+
+/* statement paragraph */
+.statement {
+  margin: 26px auto 0;
+  max-width: 580px;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 24px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+.statement em { font-style: italic; }
+.statement strong { font-weight: 400; }
+.statement .donor { color: var(--terra); }
+.statement .tree { color: var(--moss); }
+
+/* details strip */
+.details {
+  margin-top: auto;
+  padding-top: 36px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  border-top: 1.5px dotted var(--line-2);
+}
+.detail .k {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.detail .v {
+  margin-top: 6px;
+  font-family: var(--font-display);
+  font-size: 18px;
+  color: var(--ink);
+  line-height: 1.2;
+}
+.detail .vsub {
+  margin-top: 2px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+
+/* footer */
+.foot {
+  margin-top: 28px;
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 1fr;
+  gap: 20px;
+  align-items: end;
+}
+.stamp {
+  display: inline-block;
+  transform: rotate(-5deg);
+  border: 2px solid var(--moss);
+  color: var(--moss);
+  padding: 9px 14px 8px;
+  border-radius: 6px;
+  background: color-mix(in oklch, var(--moss) 6%, transparent);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  line-height: 1.4;
+  text-align: center;
+}
+.stamp .big {
+  display: block;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 20px;
+  letter-spacing: 0;
+  text-transform: none;
+  margin: 2px 0;
+}
+.sig {
+  text-align: center;
+}
+.sig .scribble {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 28px;
+  color: var(--ink);
+  transform: rotate(-2deg);
+  display: inline-block;
+}
+.sig .line {
+  border-top: 1px solid var(--ink);
+  margin-top: -6px;
+  padding-top: 6px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.seal {
+  width: 110px; height: 110px;
+  border-radius: 50%;
+  border: 1.5px solid var(--terra);
+  position: relative;
+  margin: 0 auto;
+  background: color-mix(in oklch, var(--terra) 6%, transparent);
+  transform: rotate(4deg);
+}
+.seal::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  border: 1px dashed var(--terra);
+}
+.seal-inner {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  color: var(--terra);
+  text-transform: uppercase;
+  text-align: center;
+  line-height: 1.3;
+}
+.seal-inner .glyph {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 24px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.seal-text {
+  position: absolute; inset: 0;
+  font-family: var(--font-mono);
+  font-size: 7.5px;
+  letter-spacing: 0.14em;
+  color: var(--terra);
+}
+.seal-text svg { width: 100%; height: 100%; }
+
+/* caption */
+.caption {
+  margin-top: 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.caption .id {
+  color: var(--ink);
+  letter-spacing: 0.18em;
+}
+
+.watermark {
+  position: absolute;
+  bottom: 90px; right: -20px;
+  transform: rotate(-90deg);
+  transform-origin: center;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: var(--line-2);
+  pointer-events: none;
+}
+
+@page { size: A4 portrait; margin: 0; }
+@media print {
+  body { background: white; padding: 0; }
+  .page { box-shadow: none; }
+}
+</style>
+</head>
+<body>
+
+<article class="page">
+  <div class="frame"></div>
+  <div class="corner tl"></div>
+  <div class="corner tr"></div>
+  <div class="corner bl"></div>
+  <div class="corner br"></div>
+
+  <div class="watermark">planttree.life &nbsp; · &nbsp; payment received &nbsp; · &nbsp; one rupee, one farmer, one tree</div>
+
+  <div class="inner">
+
+    <header class="head">
+      <div class="brand">
+        <span class="dot"></span><span>PlantTree</span><span class="tld">.life</span>
+      </div>
+      <div class="meta">
+        <span>Acknowledgment of Receipt</span>
+        <span class="pip"></span>
+        <span>Uttarakhand · India</span>
+        <span class="pip"></span>
+        <span>Tree #{{treeId}}</span>
+      </div>
+    </header>
+
+    <div class="eyebrow">Hereby it is acknowledged that the sum of</div>
+
+    <div class="title">
+      <h1><em>Received</em></h1>
+    </div>
+
+    <div class="amount-block">
+      <div class="amt"><span class="sym">₹</span>{{amount}}</div>
+      <div class="badge">verified<span class="big">{{paidShort}}</span>by the farmer</div>
+    </div>
+    <div class="amount-words">— {{amountWords}} —</div>
+
+    <div class="split"><hr/><span class="mk">✦</span><hr/></div>
+
+    <div class="statement">
+      has been paid by <span class="donor"><em>{{donorName}}</em></span> of {{donorCity}}
+      <strong style="color:var(--muted); font-size:0.7em; letter-spacing:0.02em;">— directly, by UPI —</strong>
+      to <strong>{{farmerName}}</strong> of {{village}} village, {{district}},
+      for {{planLong}} of one <span class="tree"><em>{{speciesLower}}</em></span> sapling
+      bearing the tag <strong>{{treeId}}</strong>. The donor's payment screenshot has been
+      reviewed and confirmed by the farmer.
+    </div>
+
+    <div class="details">
+      <div class="detail">
+        <div class="k">Paid on</div>
+        <div class="v">{{paidOn}}</div>
+        <div class="vsub">{{paidTime}} IST · donor-side</div>
+      </div>
+      <div class="detail">
+        <div class="k">Paid to UPI</div>
+        <div class="v">{{upiLocal}}<small style="font-size:0.6em;color:var(--muted);">@{{upiDomain}}</small></div>
+        <div class="vsub">farmer's own bank · direct</div>
+      </div>
+      <div class="detail">
+        <div class="k">Verified by</div>
+        <div class="v">{{farmerFirstName}}-ji</div>
+        <div class="vsub">screenshot reviewed · {{verifiedAt}}</div>
+      </div>
+      <div class="detail">
+        <div class="k">Care plan</div>
+        <div class="v">{{carePlan}}</div>
+        <div class="vsub">tree #{{treeId}} · {{speciesLower}}</div>
+      </div>
+    </div>
+
+    <div class="foot">
+      <div style="display:flex; justify-content:flex-start;">
+        <div class="stamp">Screenshot verified<span class="big">{{paidShort}}</span>by {{farmerFirstNameLower}}-ji</div>
+      </div>
+      <div class="sig">
+        <div class="scribble">{{farmerName}}</div>
+        <div class="line">received by · farmer signature</div>
+      </div>
+      <div>
+        <div class="seal">
+          <div class="seal-text">
+            <svg viewBox="0 0 110 110">
+              <defs>
+                <path id="circ" d="M 55,55 m -45,0 a 45,45 0 1,1 90,0 a 45,45 0 1,1 -90,0"/>
+              </defs>
+              <text fill="currentColor">
+                <textPath href="#circ" startOffset="0">DIRECT UPI · FARMER VERIFIED · NO COMMISSION ·</textPath>
+              </text>
+            </svg>
+          </div>
+          <div class="seal-inner">
+            <div class="glyph">✓</div>
+            <div>farmer<br/>verified</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="caption">
+      <span>verify · planttree.life/r/<span class="id">{{treeId}}</span>/{{verifyToken}}</span>
+      <span>issued {{issuedOnLower}}</span>
+    </div>
+  </div>
+</article>
+
+</body>
+</html>

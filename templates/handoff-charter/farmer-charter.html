@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Farmer Charter · किसान शपथ-पत्र · {{farmerName}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&family=Tiro+Devanagari+Hindi:ital@0;1&display=swap" rel="stylesheet">
+<style>
+/* ========================================================================
+   PlantTree.org · Farmer Charter · "Vachan-patra"
+   A signed, bilingual one-pager shown on every farmer's public page.
+   Three parts: verified identity & standing · the farmer's pledge ·
+   track record — closed by farmer signature/thumbprint + partner counter-sign.
+   A4 portrait · 800×1131 px working frame.
+   ======================================================================== */
+
+:root {
+  --paper:    oklch(0.965 0.012 82);
+  --paper-2:  oklch(0.935 0.022 78);
+  --paper-3:  oklch(0.895 0.028 76);
+  --ink:      oklch(0.22 0.018 60);
+  --ink-2:    oklch(0.36 0.022 60);
+  --muted:    oklch(0.52 0.022 65);
+  --line:     oklch(0.82 0.022 75);
+  --line-2:   oklch(0.74 0.028 70);
+  --moss:     oklch(0.42 0.085 145);
+  --moss-soft:oklch(0.86 0.045 140);
+  --terra:    oklch(0.6 0.13 45);
+  --terra-soft:oklch(0.88 0.05 55);
+
+  --font-display: "Instrument Serif", "Source Serif Pro", Georgia, serif;
+  --font-body:    "DM Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono:    "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-hindi:   "Tiro Devanagari Hindi", "Noto Serif Devanagari", serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: oklch(0.88 0.02 75);
+  font-family: var(--font-body);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "ss01", "cv11";
+}
+body { padding: 40px 20px; display: flex; justify-content: center; }
+
+.page {
+  width: 800px;
+  height: 1131px;
+  background: var(--paper);
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    0 30px 70px rgba(40,30,20,0.18),
+    0 6px 14px rgba(40,30,20,0.08);
+  background-image:
+    radial-gradient(circle at 22% 16%, rgba(0,0,0,0.022) 0, transparent 55%),
+    radial-gradient(circle at 82% 78%, rgba(0,0,0,0.028) 0, transparent 50%),
+    radial-gradient(circle at 50% 92%, rgba(120,80,30,0.035) 0, transparent 55%);
+}
+.page::before {
+  content: "";
+  position: absolute; inset: 0;
+  background-image:
+    repeating-linear-gradient(91deg, rgba(0,0,0,0.012) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(2deg,  rgba(0,0,0,0.009) 0 1px, transparent 1px 4px);
+  pointer-events: none;
+  mix-blend-mode: multiply;
+}
+
+/* ornamental frame */
+.frame {
+  position: absolute;
+  inset: 26px;
+  border: 1px solid var(--line-2);
+  pointer-events: none;
+}
+.frame::after {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  border: 1px dotted var(--line-2);
+}
+.corner {
+  position: absolute;
+  width: 24px; height: 24px;
+  border: 1.5px solid var(--moss);
+  background: var(--paper);
+}
+.corner.tl { top: 20px;    left: 20px;    border-radius: 6px 0 6px 0; }
+.corner.tr { top: 20px;    right: 20px;   border-radius: 0 6px 0 6px; }
+.corner.bl { bottom: 20px; left: 20px;    border-radius: 0 6px 0 6px; }
+.corner.br { bottom: 20px; right: 20px;   border-radius: 6px 0 6px 0; }
+.corner::after {
+  content: "";
+  position: absolute; inset: 5px;
+  border: 1px solid var(--moss);
+  border-radius: inherit;
+  opacity: 0.5;
+}
+
+.inner {
+  position: relative;
+  padding: 52px 60px 40px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== HEAD ===== */
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 14px;
+  border-bottom: 1.5px dotted var(--line-2);
+}
+.brand {
+  display: flex; align-items: baseline; gap: 8px;
+  font-family: var(--font-display);
+  font-size: 21px;
+  letter-spacing: -0.01em;
+}
+.brand .dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--moss);
+  transform: translateY(-2px);
+}
+.brand .tld {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+}
+.head .meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  display: flex; gap: 12px; align-items: center;
+}
+.head .meta .pip {
+  width: 4px; height: 4px; border-radius: 50%;
+  background: var(--moss);
+  display: inline-block;
+}
+
+/* ===== TITLE ===== */
+.title {
+  text-align: center;
+  margin-top: 16px;
+}
+.title .eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--terra);
+}
+.title h1 {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 62px;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  font-weight: 400;
+  color: var(--ink);
+  margin-top: 4px;
+}
+.title .hindi {
+  font-family: var(--font-hindi);
+  font-size: 22px;
+  color: var(--ink-2);
+  margin-top: 8px;
+  font-style: italic;
+}
+
+/* who block */
+.who {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+.who .avatar {
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background:
+    repeating-linear-gradient(135deg,
+      var(--terra-soft) 0 7px,
+      color-mix(in oklch, var(--terra-soft) 78%, var(--paper)) 7px 14px);
+  border: 1.5px solid var(--line);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 24px;
+  color: var(--terra);
+}
+.who .avatar img,
+.who .avatar > img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.who .txt { text-align: left; }
+.who .name {
+  font-family: var(--font-display);
+  font-size: 38px;
+  line-height: 1;
+  letter-spacing: -0.015em;
+}
+.who .where {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  margin-top: 4px;
+  text-transform: uppercase;
+}
+
+/* ===== VERIFIED STANDING ===== */
+.standing {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.vcard {
+  border: 1px solid var(--line);
+  background: var(--paper-2);
+  border-radius: 9px;
+  padding: 14px 14px 13px;
+  position: relative;
+}
+.vcard .tick {
+  position: absolute;
+  top: 12px; right: 12px;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--moss);
+  color: var(--paper);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+}
+.vcard .k {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.vcard .v {
+  margin-top: 5px;
+  font-family: var(--font-display);
+  font-size: 19px;
+  line-height: 1.1;
+  color: var(--ink);
+}
+.vcard .sub {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--ink-2);
+  line-height: 1.35;
+}
+.vcard .hindi {
+  font-family: var(--font-hindi);
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 3px;
+}
+
+/* ===== PLEDGE ===== */
+.pledge {
+  margin-top: 16px;
+}
+.pledge-head {
+  display: flex; align-items: baseline; gap: 34px;
+  margin-bottom: 10px;
+}
+.pledge-head h2 {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding-right: 6px;
+}
+.pledge-head h2 em { font-style: italic; color: var(--terra); }
+.pledge-head .hindi {
+  font-family: var(--font-hindi);
+  font-size: 16px;
+  color: var(--muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.pledge-head .rule { flex: 1; border: 0; border-top: 1.5px dotted var(--line-2); align-self: center; }
+
+.pledge-intro {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 17px;
+  color: var(--ink-2);
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+
+.vow {
+  display: grid;
+  grid-template-columns: 30px 1fr;
+  gap: 14px;
+  padding: 6px 0;
+  border-bottom: 1px dotted var(--line-2);
+  align-items: start;
+}
+.vow:last-child { border-bottom: 0; }
+.vow .num {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 26px;
+  line-height: 1;
+  color: var(--terra);
+}
+.vow .en {
+  font-family: var(--font-display);
+  font-size: 19px;
+  line-height: 1.25;
+  color: var(--ink);
+}
+.vow .hi {
+  font-family: var(--font-hindi);
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--ink-2);
+  margin-top: 3px;
+}
+
+/* ===== TRACK RECORD ===== */
+.record {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  padding: 13px 18px;
+  background: color-mix(in oklch, var(--moss-soft) 22%, var(--paper));
+  border: 1px solid color-mix(in oklch, var(--moss) 24%, var(--line));
+  border-radius: 10px;
+}
+.record .stat { text-align: center; }
+.record .stat .n {
+  font-family: var(--font-display);
+  font-size: 30px;
+  line-height: 1;
+  color: var(--ink);
+}
+.record .stat .l {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 5px;
+}
+
+/* ===== SIGNATURES ===== */
+.signs {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1.5px dotted var(--line-2);
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 28px;
+  align-items: end;
+}
+
+/* digital-signature attestation block (mono) */
+.sign-digital {
+  border: 1.5px solid var(--moss);
+  border-radius: 10px;
+  background: color-mix(in oklch, var(--moss) 5%, var(--paper));
+  padding: 11px 14px 11px;
+  position: relative;
+}
+.sign-digital .sd-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 7px;
+}
+.sign-digital .sd-head .glyph {
+  width: 18px; height: 18px;
+  border-radius: 5px;
+  background: var(--moss);
+  color: var(--paper);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+.sign-digital .sd-head .t {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--moss);
+  font-weight: 500;
+}
+.sign-digital .sd-row {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.4;
+  padding: 1px 0;
+}
+.sign-digital .sd-row .lab {
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+.sign-digital .sd-row .val {
+  color: var(--ink);
+  letter-spacing: 0.01em;
+  word-break: break-all;
+}
+.sign-digital .sd-row .val .ok {
+  color: var(--moss);
+}
+.sign-digital .sd-foot {
+  margin-top: 7px;
+  padding-top: 7px;
+  border-top: 1px dotted var(--line-2);
+  font-family: var(--font-hindi);
+  font-size: 10.5px;
+  color: var(--ink-2);
+  line-height: 1.35;
+}
+
+/* partner counter-sign + seal */
+.partner {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 14px;
+}
+.partner .ptxt { text-align: right; }
+.partner .ptxt .who2 {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 19px;
+  line-height: 1.1;
+  color: var(--ink);
+}
+.partner .ptxt .line {
+  border-top: 1px solid var(--ink);
+  margin-top: 4px;
+  padding-top: 6px;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.seal {
+  width: 88px; height: 88px;
+  border-radius: 50%;
+  border: 1.5px solid var(--moss);
+  position: relative;
+  flex-shrink: 0;
+  background: color-mix(in oklch, var(--moss) 5%, transparent);
+  transform: rotate(4deg);
+}
+.seal::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  border: 1px dashed var(--moss);
+}
+.seal-inner {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 7px;
+  letter-spacing: 0.12em;
+  color: var(--moss);
+  text-transform: uppercase;
+  text-align: center;
+  line-height: 1.3;
+}
+.seal-inner .glyph {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 22px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.seal-text {
+  position: absolute; inset: 0;
+  font-family: var(--font-mono);
+  font-size: 6.5px;
+  letter-spacing: 0.1em;
+  color: var(--moss);
+}
+.seal-text svg { width: 100%; height: 100%; }
+
+/* caption */
+.caption {
+  margin-top: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.caption .id { color: var(--ink); letter-spacing: 0.16em; }
+
+@page { size: A4 portrait; margin: 0; }
+@media print {
+  body { background: white; padding: 0; }
+  .page { box-shadow: none; }
+}
+</style>
+</head>
+<body>
+
+<article class="page">
+  <div class="frame"></div>
+  <div class="corner tl"></div>
+  <div class="corner tr"></div>
+  <div class="corner bl"></div>
+  <div class="corner br"></div>
+
+  <div class="inner">
+
+    <!-- HEAD -->
+    <header class="head">
+      <div class="brand">
+        <span class="dot"></span><span>PlantTree</span><span class="tld">.org</span>
+      </div>
+      <div class="meta">
+        <span>Farmer Charter</span>
+        <span class="pip"></span>
+        <span>{{district}} · Uttarakhand</span>
+        <span class="pip"></span>
+        <span>{{fCode}}</span>
+      </div>
+    </header>
+
+    <!-- TITLE -->
+    <div class="title">
+      <div class="eyebrow">Verified Planter · Pledge &amp; Standing</div>
+      <h1>Farmer Charter</h1>
+      <div class="hindi">किसान शपथ-पत्र</div>
+    </div>
+
+    <!-- WHO -->
+    <div class="who">
+      <!-- TODO[claude-code]: replace this CSS avatar with the farmer's real verified photo.
+           e.g. <img class="avatar" src="{farmerPhotoUrl}" alt="Sunita Devi" />
+           Keep the .avatar dimensions (60×60, border-radius:50%); add object-fit:cover. -->
+      <div class="avatar">{{avatarInitial}}</div>
+      <div class="txt">
+        <div class="name">{{farmerName}}</div>
+        <div class="where">{{village}} · {{district}} · planter since {{memberSince}}</div>
+      </div>
+    </div>
+
+    <!-- VERIFIED STANDING -->
+    <div class="standing">
+      <div class="vcard">
+        <div class="tick">✓</div>
+        <div class="k">Identity</div>
+        <div class="v">Govt. ID verified</div>
+        <div class="sub">Photo ID checked in person by {{verifiedBy}} · {{verifiedMonth}}</div>
+        <div class="hindi">सरकारी पहचान-पत्र सत्यापित</div>
+      </div>
+      <div class="vcard">
+        <div class="tick">✓</div>
+        <div class="k">Land</div>
+        <div class="v">Tenure confirmed</div>
+        <div class="sub">{{tenureSub}}</div>
+        <div class="hindi">भूमि अधिकार — वन पंचायत प्रस्ताव दर्ज</div>
+      </div>
+      <div class="vcard">
+        <div class="tick">✓</div>
+        <div class="k">Payment</div>
+        <div class="v">Own bank account</div>
+        <div class="sub">UPI {{upiId}} confirmed as her own · paid direct, no commission</div>
+        <div class="hindi">बैंक खाता — UPI उसी का सत्यापित</div>
+      </div>
+    </div>
+
+    <!-- PLEDGE -->
+    <div class="pledge">
+      <div class="pledge-head">
+        <h2>My <em>pledge</em></h2>
+        <span class="hindi">मेरा वचन</span>
+        <hr class="rule"/>
+      </div>
+      <div class="pledge-intro">
+        To every donor who plants a tree in my care, I, {{farmerName}}, promise the following —
+      </div>
+
+      <div class="vow">
+        <div class="num">1</div>
+        <div>
+          <div class="en">I will plant only species native to this land and elevation.</div>
+          <div class="hi">मैं इस ज़मीन और ऊँचाई के अनुकूल देसी प्रजाति के ही पेड़ लगाऊँगी।</div>
+        </div>
+      </div>
+      <div class="vow">
+        <div class="num">2</div>
+        <div>
+          <div class="en">I will report honestly — if a tree dies, I will say so.</div>
+          <div class="hi">मैं सच बताऊँगी — अगर पेड़ मर जाए तो छिपाऊँगी नहीं।</div>
+        </div>
+      </div>
+      <div class="vow">
+        <div class="num">3</div>
+        <div>
+          <div class="en">I will care for each tree through its first year, and replant for free if it fails.</div>
+          <div class="hi">मैं हर पेड़ की पहले साल देखभाल करूँगी, और न बचे तो मुफ़्त दोबारा लगाऊँगी।</div>
+        </div>
+      </div>
+      <div class="vow">
+        <div class="num">4</div>
+        <div>
+          <div class="en">I will post real photos, with the tree's wooden tag in the frame.</div>
+          <div class="hi">मैं असली फ़ोटो भेजूँगी, जिसमें पेड़ की लकड़ी की ताख्ती दिखेगी।</div>
+        </div>
+      </div>
+      <div class="vow">
+        <div class="num">5</div>
+        <div>
+          <div class="en">I receive the payment directly; PlantTree never takes a rupee of it.</div>
+          <div class="hi">भुगतान सीधे मुझे मिलता है; PlantTree उसमें से एक रुपया भी नहीं लेता।</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRACK RECORD -->
+    <div class="record">
+      <div class="stat"><div class="n">{{years}} yrs</div><div class="l">planting</div></div>
+      <div class="stat"><div class="n">{{treesPlanted}}</div><div class="l">trees planted</div></div>
+      <div class="stat"><div class="n">{{treesAlive}}</div><div class="l">alive today</div></div>
+      <div class="stat"><div class="n">{{survival}}</div><div class="l">survival</div></div>
+      <div class="stat"><div class="n">{{plotsCount}}</div><div class="l">plots tended</div></div>
+    </div>
+
+    <!-- SIGNATURES -->
+    <div class="signs">
+      <div class="sign-digital">
+        <div class="sd-head">
+          <span class="glyph">✓</span>
+          <span class="t">Digitally signed</span>
+        </div>
+        <div class="sd-row"><span class="lab">signed_by</span><span class="val">{{farmerName}}</span></div>
+        <div class="sd-row"><span class="lab">method</span><span class="val">govt-ID submitted to operator <span class="ok">· verified</span></span></div>
+        <div class="sd-row"><span class="lab">id_ref</span><span class="val">{{idRef}} <span class="ok">[on file]</span></span></div>
+        <div class="sd-row"><span class="lab">timestamp</span><span class="val">{{signedAt}}</span></div>
+        <div class="sd-foot">सरकारी पहचान-पत्र देकर डिजिटल रूप से हस्ताक्षरित</div>
+      </div>
+
+      <div class="partner">
+        <div class="ptxt">
+          <div class="who2">{{verifiedBy}}</div>
+          <div class="line">Counter-signed · verifying partner · {{district}}</div>
+        </div>
+        <div class="seal">
+          <div class="seal-text">
+            <svg viewBox="0 0 88 88">
+              <defs>
+                <path id="sealcirc" d="M 44,44 m -34,0 a 34,34 0 1,1 68,0 a 34,34 0 1,1 -68,0"/>
+              </defs>
+              <text fill="currentColor">
+                <textPath href="#sealcirc" startOffset="0">PLANTTREE · VERIFIED PLANTER · {{districtUpper}} ·</textPath>
+              </text>
+            </svg>
+          </div>
+          <div class="seal-inner">
+            <div class="glyph">✶</div>
+            <div>verified</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CAPTION -->
+    <div class="caption">
+      <span>verify · planttree.life/charter/<span class="id">{{farmerId}}</span>/{{verifyToken}}</span>
+      <span>charter issued {{issuedOn}} · reviewed annually</span>
+    </div>
+
+  </div>
+</article>
+
+</body>
+</html>

@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tree Certificate · {{treeId}} · {{species}} · {{donorName}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ========================================================================
+   PlantTree.life · Donor Certificate · "Editorial Bold"
+   A bolder, modern editorial layout. Full-bleed moss banner with massive
+   species italic + clean paper details below.
+   Print target: A4 portrait · 800×1131 px working frame.
+   ======================================================================== */
+
+:root {
+  --paper:    oklch(0.965 0.012 82);
+  --paper-2:  oklch(0.935 0.022 78);
+  --paper-3:  oklch(0.895 0.028 76);
+  --ink:      oklch(0.22 0.018 60);
+  --ink-2:    oklch(0.36 0.022 60);
+  --muted:    oklch(0.52 0.022 65);
+  --line:     oklch(0.82 0.022 75);
+  --line-2:   oklch(0.74 0.028 70);
+  --moss:     oklch(0.42 0.085 145);
+  --moss-deep:oklch(0.32 0.075 145);
+  --moss-soft:oklch(0.86 0.045 140);
+  --terra:    oklch(0.6 0.13 45);
+  --cream:    oklch(0.96 0.025 82);
+
+  --font-display: "Instrument Serif", "Source Serif Pro", Georgia, serif;
+  --font-body:    "DM Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono:    "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: oklch(0.88 0.02 75);
+  font-family: var(--font-body);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "ss01", "cv11";
+}
+
+body { padding: 40px 20px; display: flex; justify-content: center; }
+
+.page {
+  width: 800px;
+  height: 1131px;
+  background: var(--paper);
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    0 30px 70px rgba(40,30,20,0.18),
+    0 6px 14px rgba(40,30,20,0.08);
+}
+
+/* ============== TOP BANNER (moss) ============== */
+.banner {
+  position: relative;
+  height: 440px;
+  background: var(--moss-deep);
+  color: var(--cream);
+  padding: 40px 72px 56px;
+  overflow: hidden;
+}
+/* hatched paper texture overlay */
+.banner::before {
+  content: "";
+  position: absolute; inset: 0;
+  background-image:
+    repeating-linear-gradient(135deg,
+      rgba(255,255,255,0.03) 0 1px, transparent 1px 6px),
+    radial-gradient(ellipse at 80% 0%, rgba(255,255,255,0.10) 0, transparent 60%),
+    radial-gradient(ellipse at 0% 100%, rgba(0,0,0,0.20) 0, transparent 55%);
+  pointer-events: none;
+}
+/* tree silhouette anchored bottom-right of banner */
+.banner-tree {
+  position: absolute;
+  right: -40px;
+  bottom: -30px;
+  opacity: 0.16;
+}
+
+.banner-head {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(245,235,210,0.25);
+  padding-bottom: 14px;
+}
+.brand {
+  display: flex; align-items: baseline; gap: 8px;
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: -0.01em;
+}
+.brand .dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--cream);
+  display: inline-block;
+  transform: translateY(-2px);
+}
+.brand .tld {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: rgba(245,235,210,0.7);
+  letter-spacing: 0.06em;
+}
+.banner-meta {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(245,235,210,0.8);
+}
+
+.banner-eyebrow {
+  position: relative;
+  margin-top: 38px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.36em;
+  text-transform: uppercase;
+  color: rgba(245,235,210,0.85);
+}
+
+.banner-species {
+  position: relative;
+  margin-top: 8px;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 160px;
+  line-height: 0.86;
+  letter-spacing: -0.03em;
+  color: var(--cream);
+}
+.banner-species .amp {
+  display: inline-block;
+  vertical-align: middle;
+  font-style: italic;
+  color: rgba(245,235,210,0.5);
+  font-size: 0.55em;
+  transform: translateY(-12px) rotate(-4deg);
+  margin: 0 6px;
+}
+.banner-sci {
+  position: relative;
+  margin-top: 20px;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 22px;
+  color: rgba(245,235,210,0.75);
+}
+
+/* big species number / stamp top-right */
+.banner-stamp {
+  position: absolute;
+  top: 60px;
+  right: 72px;
+  transform: rotate(4deg);
+  text-align: center;
+  border: 1.5px solid rgba(245,235,210,0.6);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: var(--cream);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.banner-stamp .big {
+  display: block;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 28px;
+  letter-spacing: 0;
+  text-transform: none;
+  margin: 2px 0;
+}
+
+/* ============== BODY (paper) ============== */
+.body {
+  padding: 36px 72px 40px;
+  position: relative;
+}
+/* paper grain */
+.page::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: 440px; bottom: 0;
+  background-image:
+    radial-gradient(circle at 22% 18%, rgba(0,0,0,0.022) 0, transparent 55%),
+    radial-gradient(circle at 80% 70%, rgba(0,0,0,0.028) 0, transparent 50%),
+    repeating-linear-gradient(91deg, rgba(0,0,0,0.012) 0 1px, transparent 1px 3px);
+  pointer-events: none;
+  mix-blend-mode: multiply;
+}
+
+/* hand-deckle edge between banner and body */
+.deckle {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 12px;
+  background:
+    radial-gradient(circle at 8px 0, transparent 0 5px, var(--paper) 5px 7px, transparent 7px 100%) 0 0 / 16px 12px repeat-x;
+}
+
+/* dedication block */
+.dedication {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 22px;
+}
+.dedication .label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--terra);
+}
+.dedication hr {
+  border: 0;
+  border-top: 1.5px dotted var(--line-2);
+}
+.donor {
+  margin-top: 12px;
+  font-family: var(--font-display);
+  font-size: 64px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.donor em {
+  font-style: italic;
+  color: var(--terra);
+}
+.location {
+  margin-top: 10px;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 22px;
+  color: var(--ink-2);
+}
+
+/* divider line — hand-deckled */
+.split {
+  margin: 26px 0 20px;
+  display: flex; align-items: center; gap: 18px;
+}
+.split hr { flex: 1; border: 0; border-top: 1.5px dotted var(--line-2); }
+.split .mk {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 28px;
+  color: var(--terra);
+}
+
+/* data grid: 4 rows x 2 cols, plus a wide top row */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 36px;
+  row-gap: 14px;
+}
+.grid .row {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 18px;
+  align-items: baseline;
+  padding-bottom: 10px;
+  border-bottom: 1px dotted var(--line-2);
+}
+.grid .row .k {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.grid .row .v {
+  font-family: var(--font-display);
+  font-size: 20px;
+  line-height: 1.15;
+  color: var(--ink);
+}
+.grid .row .v small {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.03em;
+}
+
+/* footer trio: stamp, signature, seal */
+.foot {
+  margin-top: 26px;
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 1fr;
+  gap: 18px;
+  align-items: end;
+}
+.stamp {
+  display: inline-block;
+  transform: rotate(-5deg);
+  border: 2px solid var(--terra);
+  color: var(--terra);
+  padding: 10px 16px 9px;
+  border-radius: 6px;
+  background: color-mix(in oklch, var(--terra) 7%, transparent);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  text-align: center;
+  line-height: 1.4;
+}
+.stamp .big {
+  display: block;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 22px;
+  letter-spacing: 0;
+  text-transform: none;
+  margin: 2px 0;
+}
+.sig {
+  text-align: center;
+}
+.sig .scribble {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 30px;
+  color: var(--ink);
+  transform: rotate(-2deg);
+  display: inline-block;
+}
+.sig .line {
+  border-top: 1px solid var(--ink);
+  margin-top: -6px;
+  padding-top: 8px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.seal {
+  width: 110px; height: 110px;
+  border-radius: 50%;
+  border: 1.5px solid var(--moss);
+  position: relative;
+  margin: 0 auto;
+  background: color-mix(in oklch, var(--moss) 5%, transparent);
+  transform: rotate(4deg);
+}
+.seal::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  border: 1px dashed var(--moss);
+}
+.seal-inner {
+  position: absolute;
+  inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  color: var(--moss);
+  text-transform: uppercase;
+  text-align: center;
+  line-height: 1.3;
+}
+.seal-inner .star {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 24px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.seal-text {
+  position: absolute; inset: 0;
+  font-family: var(--font-mono);
+  font-size: 7.5px;
+  letter-spacing: 0.14em;
+  color: var(--moss);
+}
+.seal-text svg { width: 100%; height: 100%; }
+
+.caption {
+  position: absolute;
+  left: 72px; right: 72px; bottom: 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.caption .id { color: var(--ink); }
+
+@page { size: A4 portrait; margin: 0; }
+@media print {
+  body { background: white; padding: 0; }
+  .page { box-shadow: none; }
+}
+</style>
+</head>
+<body>
+
+<article class="page">
+
+  <!-- ============== BANNER (moss block) ============== -->
+  <section class="banner">
+    <div class="banner-head">
+      <div class="brand">
+        <span class="dot"></span><span>PlantTree</span><span class="tld">.life</span>
+      </div>
+      <div class="banner-meta">Certificate · Uttarakhand · No. {{treeId}}</div>
+    </div>
+
+    <div class="banner-eyebrow">One tree · {{speciesLower}} · planted in your name</div>
+    <h1 class="banner-species">{{species}}</h1>
+    <div class="banner-sci">{{sciName}}</div>
+
+    <!-- big silhouette tucked into banner -->
+    <svg class="banner-tree" viewBox="0 0 360 360" width="360" height="360" aria-hidden="true">
+      <rect x="170" y="200" width="20" height="110" rx="3" fill="rgb(255 245 220)"/>
+      <ellipse cx="180" cy="170" rx="110" ry="80" fill="rgb(255 245 220)"/>
+      <ellipse cx="125" cy="190" rx="62" ry="48" fill="rgb(255 245 220)"/>
+      <ellipse cx="235" cy="186" rx="64" ry="52" fill="rgb(255 245 220)"/>
+      <ellipse cx="180" cy="130" rx="72" ry="48" fill="rgb(255 245 220)"/>
+    </svg>
+
+    <div class="deckle"></div>
+  </section>
+
+  <!-- ============== BODY (paper) ============== -->
+  <section class="body">
+
+    <div class="dedication">
+      <span class="label">in the name of</span>
+      <hr/>
+      <span style="font-family:var(--font-display); font-style:italic; font-size:18px; color:var(--terra);">✦</span>
+    </div>
+
+    <div class="donor"><em>{{donorFirstName}}</em> {{donorLastName}}</div>
+    <div class="location">at <em>{{plotName}}</em> · {{village}} village, {{district}} · {{elevation}} m</div>
+
+    <div class="split"><hr/><span class="mk">✦</span><hr/></div>
+
+    <div class="grid">
+      <div class="row">
+        <div class="k">Planted on</div>
+        <div class="v">{{plantedOn}}<small>by {{farmerFirstName}}-ji</small></div>
+      </div>
+      <div class="row">
+        <div class="k">Tree no.</div>
+        <div class="v">{{treeId}}<small>wooden tag staked beside it</small></div>
+      </div>
+      <div class="row">
+        <div class="k">Tended by</div>
+        <div class="v">{{farmerName}}<small>{{farmerYears}} yrs · {{treesAlive}} trees alive · {{village}}</small></div>
+      </div>
+      <div class="row">
+        <div class="k">Plot</div>
+        <div class="v">{{areaHa}} ha · {{aspect}}<small>{{waterSource}}</small></div>
+      </div>
+      <div class="row">
+        <div class="k">Care plan</div>
+        <div class="v">{{carePlan}}<small>watering · weeding · monsoon protection</small></div>
+      </div>
+      <div class="row">
+        <div class="k">Paid to farmer</div>
+        <div class="v">{{pricePaid}}<small>direct UPI · {{upiId}}</small></div>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="foot">
+      <div style="display:flex; justify-content:flex-start;">
+        <div class="stamp">Tag staked &amp; geolocated<span class="big">{{plantedShort}}</span>{{lat}}°N · {{lng}}°E</div>
+      </div>
+
+      <div class="sig">
+        <div class="scribble">{{farmerName}}</div>
+        <div class="line">signed by the farmer · {{village}}, {{district}}</div>
+      </div>
+
+      <div>
+        <div class="seal">
+          <div class="seal-text">
+            <svg viewBox="0 0 110 110">
+              <defs>
+                <path id="circle2" d="M 55,55 m -45,0 a 45,45 0 1,1 90,0 a 45,45 0 1,1 -90,0"/>
+              </defs>
+              <text fill="currentColor">
+                <textPath href="#circle2" startOffset="0">VAN PANCHAYAT · {{villageUpper}} · VERIFIED · {{districtUpper}} ·</textPath>
+              </text>
+            </svg>
+          </div>
+          <div class="seal-inner">
+            <div class="star">✶</div>
+            <div>verified</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <div class="caption">
+    <span>verify at planttree.life/cert/<span class="id">{{treeId}}</span>/{{verifyToken}}</span>
+    <span>issued · {{issuedOnLower}}</span>
+  </div>
+
+</article>
+
+</body>
+</html>

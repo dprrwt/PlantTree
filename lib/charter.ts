@@ -9,9 +9,12 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { createAdminClient } from "@/lib/supabase/admin";
 
+// Runtime asset, kept in the tracked templates/ dir (design_extract/ is
+// gitignored and never reaches production). Sourced from
+// design_extract/handoff-charter/farmer-charter.html.
 const TEMPLATE_PATH = path.join(
   process.cwd(),
-  "design_extract",
+  "templates",
   "handoff-charter",
   "farmer-charter.html",
 );

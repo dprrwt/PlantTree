@@ -108,10 +108,12 @@ function rupeesInWords(amount: number): string {
 // Template loading + substitution
 // ---------------------------------------------------------------------------
 
+// Runtime assets, kept in the tracked templates/ dir (design_extract/ is
+// gitignored and never reaches production). Sourced from
+// design_extract/caertificates and receipts/handoff-certificates/.
 const TEMPLATE_DIR = path.join(
   process.cwd(),
-  "design_extract",
-  "caertificates and receipts",
+  "templates",
   "handoff-certificates",
 );
 
