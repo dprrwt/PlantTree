@@ -501,6 +501,32 @@ button { font-family: inherit; cursor: pointer; }
   .where-dstats { grid-template-columns: 1fr 1fr; gap: 16px; }
 }
 
+/* "how it works" page — responsive layout helpers */
+.how-hero { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 56px; align-items: end; }
+.how-step { display: grid; grid-template-columns: 0.4fr 1.6fr; }
+.how-step-aside { padding: 36px 28px; border-right: 1px dashed var(--line-2); }
+.how-step-body { padding: 36px 32px; }
+.how-flow { display: grid; grid-template-columns: 1fr 50px 1.1fr 50px 1fr; align-items: center; gap: 14px; }
+.how-faq { display: grid; grid-template-columns: 0.7fr 1.3fr; gap: 48px; align-items: start; }
+
+.how-hero > *,
+.how-step > *,
+.how-flow > * { min-width: 0; }
+
+@media (max-width: 900px) {
+  .how-hero,
+  .how-faq { grid-template-columns: 1fr; gap: 32px; }
+  .how-step { grid-template-columns: 1fr; }
+  .how-step-aside { border-right: 0; border-bottom: 1px dashed var(--line-2); }
+  /* the 5-col money diagram becomes a vertical you -> farmer -> use flow */
+  .how-flow { grid-template-columns: 1fr; gap: 10px; }
+}
+
+@media (max-width: 720px) {
+  .how-step-aside { padding: 22px 20px; }
+  .how-step-body { padding: 28px 20px; }
+}
+
 /* stat block */
 .stat-num {
   font-family: var(--font-display);

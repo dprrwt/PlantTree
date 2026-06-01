@@ -9,14 +9,7 @@ export function How({ navigate }: { navigate: (s: Screen) => void }) {
     <div>
       {/* HERO */}
       <section className="shell" style={{ paddingTop: 56, paddingBottom: 32 }}>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1.05fr 0.95fr",
-            gap: 56,
-            alignItems: "end",
-          }}
-        >
+        <div className="how-hero">
           <div>
             <div
               style={{
@@ -96,13 +89,12 @@ export function How({ navigate }: { navigate: (s: Screen) => void }) {
         <div className="col" style={{ gap: 32 }}>
           {/* STEP 1 — Choose */}
           <div className="card frame" style={{ padding: 0, overflow: "hidden" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "0.4fr 1.6fr" }}>
+            <div className="how-step">
               <div
+                className="how-step-aside"
                 style={{
                   background:
                     "color-mix(in oklch, var(--moss-soft) 50%, var(--paper))",
-                  padding: "36px 28px",
-                  borderRight: "1px dashed var(--line-2)",
                 }}
               >
                 <div
@@ -137,7 +129,7 @@ export function How({ navigate }: { navigate: (s: Screen) => void }) {
                   Choose a farmer
                 </div>
               </div>
-              <div style={{ padding: "36px 32px" }}>
+              <div className="how-step-body">
                 <p
                   style={{
                     fontSize: 16,
@@ -196,13 +188,12 @@ export function How({ navigate }: { navigate: (s: Screen) => void }) {
 
           {/* STEP 2 — Pay directly */}
           <div className="card frame" style={{ padding: 0, overflow: "hidden" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "0.4fr 1.6fr" }}>
+            <div className="how-step">
               <div
+                className="how-step-aside"
                 style={{
                   background:
                     "color-mix(in oklch, var(--terra-soft) 40%, var(--paper))",
-                  padding: "36px 28px",
-                  borderRight: "1px dashed var(--line-2)",
                 }}
               >
                 <div
@@ -237,7 +228,7 @@ export function How({ navigate }: { navigate: (s: Screen) => void }) {
                   Pay directly
                 </div>
               </div>
-              <div style={{ padding: "36px 32px" }}>
+              <div className="how-step-body">
                 <p
                   style={{
                     fontSize: 16,
@@ -252,14 +243,7 @@ export function How({ navigate }: { navigate: (s: Screen) => void }) {
                   account via UPI. No intermediary, no escrow, no platform fee.
                 </p>
                 <hr className="dotted-rule" style={{ margin: "20px 0" }} />
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr 1fr",
-                    gap: 18,
-                    marginBottom: 22,
-                  }}
-                >
+                <div className="grid-3" style={{ marginBottom: 22 }}>
                   {[
                     {
                       method: "Method 1",
@@ -307,13 +291,7 @@ export function How({ navigate }: { navigate: (s: Screen) => void }) {
                   ))}
                 </div>
 
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: 18,
-                  }}
-                >
+                <div className="split-2" style={{ gap: 18 }}>
                   <div
                     style={{
                       padding: 18,
@@ -371,13 +349,12 @@ export function How({ navigate }: { navigate: (s: Screen) => void }) {
 
           {/* STEP 3 — Plant & verify */}
           <div className="card frame" style={{ padding: 0, overflow: "hidden" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "0.4fr 1.6fr" }}>
+            <div className="how-step">
               <div
+                className="how-step-aside"
                 style={{
                   background:
                     "color-mix(in oklch, var(--moss-soft) 50%, var(--paper))",
-                  padding: "36px 28px",
-                  borderRight: "1px dashed var(--line-2)",
                 }}
               >
                 <div
@@ -412,7 +389,7 @@ export function How({ navigate }: { navigate: (s: Screen) => void }) {
                   Plant &amp; verify
                 </div>
               </div>
-              <div style={{ padding: "36px 32px" }}>
+              <div className="how-step-body">
                 <p
                   style={{
                     fontSize: 16,
@@ -566,13 +543,12 @@ export function How({ navigate }: { navigate: (s: Screen) => void }) {
 
           {/* STEP 4 — Track */}
           <div className="card frame" style={{ padding: 0, overflow: "hidden" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "0.4fr 1.6fr" }}>
+            <div className="how-step">
               <div
+                className="how-step-aside"
                 style={{
                   background:
                     "color-mix(in oklch, var(--terra-soft) 40%, var(--paper))",
-                  padding: "36px 28px",
-                  borderRight: "1px dashed var(--line-2)",
                 }}
               >
                 <div
@@ -607,7 +583,7 @@ export function How({ navigate }: { navigate: (s: Screen) => void }) {
                   Track it grow
                 </div>
               </div>
-              <div style={{ padding: "36px 32px" }}>
+              <div className="how-step-body">
                 <p
                   style={{
                     fontSize: 16,
@@ -829,14 +805,7 @@ export function How({ navigate }: { navigate: (s: Screen) => void }) {
         <Ornament label="Follow the money" />
         <div style={{ height: 28 }}></div>
         <div className="card frame" style={{ padding: 32 }}>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 50px 1.1fr 50px 1fr",
-              alignItems: "center",
-              gap: 14,
-            }}
-          >
+          <div className="how-flow">
             <div
               style={{
                 textAlign: "center",
@@ -1019,14 +988,7 @@ export function How({ navigate }: { navigate: (s: Screen) => void }) {
       <section className="shell" style={{ paddingTop: 16, paddingBottom: 80 }}>
         <Ornament label="Frequently asked" />
         <div style={{ height: 28 }}></div>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "0.7fr 1.3fr",
-            gap: 48,
-            alignItems: "start",
-          }}
-        >
+        <div className="how-faq">
           <div>
             <h2 style={{ marginBottom: 16 }}>
               The questions
@@ -1138,15 +1100,11 @@ export function How({ navigate }: { navigate: (s: Screen) => void }) {
       {/* CTA */}
       <section className="shell" style={{ paddingBottom: 80 }}>
         <div
+          className="cta-grid cta-pad-sm"
           style={{
             background: "var(--ink)",
             color: "var(--paper)",
             borderRadius: "var(--radius-lg)",
-            padding: "44px 48px",
-            display: "grid",
-            gridTemplateColumns: "1.4fr 1fr",
-            gap: 32,
-            alignItems: "center",
           }}
         >
           <div>
