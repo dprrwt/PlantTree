@@ -60,18 +60,29 @@ export default async function DonorLayout({
           >
             {user?.email ?? "donor"}
           </span>
-          <Link
-            href="/donor/logout"
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: 11,
-              color: "var(--terra)",
-              textDecoration: "none",
-              letterSpacing: "0.04em",
-            }}
+          {/* POST form, not a <Link>: a GET logout would be prefetched in
+              production and silently sign the user out. */}
+          <form
+            action="/donor/logout"
+            method="post"
+            style={{ display: "contents" }}
           >
-            sign out →
-          </Link>
+            <button
+              type="submit"
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: 11,
+                color: "var(--terra)",
+                letterSpacing: "0.04em",
+                background: "none",
+                border: 0,
+                padding: 0,
+                cursor: "pointer",
+              }}
+            >
+              sign out →
+            </button>
+          </form>
         </div>
       </div>
       {children}
