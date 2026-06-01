@@ -475,6 +475,32 @@ button { font-family: inherit; cursor: pointer; }
   .hero-quote-card { left: 0; bottom: -22px; width: min(240px, 80%); }
 }
 
+/* "where we plant" page — responsive layout helpers */
+.where-hero { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 56px; align-items: end; }
+.where-map-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 32px; align-items: start; }
+.where-map-rail { position: sticky; top: 88px; }
+.where-dstats { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 14px; }
+.where-soil-species { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.where-plot-row {
+  display: grid; grid-template-columns: 140px 1fr; gap: 14px; align-items: stretch;
+  background: var(--paper); border: 1px solid var(--line);
+  border-radius: 10px; overflow: hidden;
+}
+.cta-pad-sm { padding: clamp(28px, 5vw, 44px) clamp(24px, 5vw, 48px); }
+
+.where-hero > *,
+.where-map-grid > * { min-width: 0; }
+
+@media (max-width: 900px) {
+  .where-hero,
+  .where-map-grid { grid-template-columns: 1fr; gap: 32px; }
+  .where-map-rail { position: static; }
+  .where-map-el { max-height: 300px; }
+  .where-soil-species,
+  .where-plot-row { grid-template-columns: 1fr; }
+  .where-dstats { grid-template-columns: 1fr 1fr; gap: 16px; }
+}
+
 /* stat block */
 .stat-num {
   font-family: var(--font-display);

@@ -40,14 +40,7 @@ export function Where({ navigate }: { navigate: (s: Screen) => void }) {
     <div>
       {/* HERO */}
       <section className="shell" style={{ paddingTop: 56, paddingBottom: 32 }}>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1.05fr 0.95fr",
-            gap: 56,
-            alignItems: "end",
-          }}
-        >
+        <div className="where-hero">
           <div>
             <div
               style={{
@@ -277,16 +270,10 @@ export function Where({ navigate }: { navigate: (s: Screen) => void }) {
         <Ornament label="Districts · status by status" />
         <div style={{ height: 28 }}></div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1.1fr 1fr",
-            gap: 32,
-            alignItems: "start",
-          }}
-        >
-          <div style={{ position: "sticky", top: 88 }}>
+        <div className="where-map-grid">
+          <div className="where-map-rail">
             <UttarakhandMap
+              className="where-map-el"
               pins={filtered}
               selected={selectedDistrict}
               onSelect={(id) =>
@@ -545,14 +532,7 @@ export function Where({ navigate }: { navigate: (s: Screen) => void }) {
                     </p>
                   </div>
 
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr 1fr 1fr",
-                      gap: 14,
-                      marginBottom: 16,
-                    }}
-                  >
+                  <div className="where-dstats" style={{ marginBottom: 16 }}>
                     <div>
                       <div
                         style={{
@@ -612,14 +592,7 @@ export function Where({ navigate }: { navigate: (s: Screen) => void }) {
                     </div>
                   </div>
 
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
-                      gap: 18,
-                      marginBottom: 16,
-                    }}
-                  >
+                  <div className="where-soil-species" style={{ marginBottom: 16 }}>
                     <div>
                       <div className="eyebrow" style={{ marginBottom: 6 }}>
                         Soil
@@ -709,19 +682,7 @@ export function Where({ navigate }: { navigate: (s: Screen) => void }) {
                             (f) => f.id === p.primaryFarmerId,
                           );
                           return (
-                            <div
-                              key={p.id}
-                              style={{
-                                display: "grid",
-                                gridTemplateColumns: "140px 1fr",
-                                gap: 14,
-                                alignItems: "stretch",
-                                background: "var(--paper)",
-                                border: "1px solid var(--line)",
-                                borderRadius: 10,
-                                overflow: "hidden",
-                              }}
-                            >
+                            <div key={p.id} className="where-plot-row">
                               <PlotView plot={p} height={140} showLabels={false} />
                               <div
                                 style={{
@@ -983,15 +944,11 @@ export function Where({ navigate }: { navigate: (s: Screen) => void }) {
       {/* CTA */}
       <section className="shell" style={{ paddingBottom: 80 }}>
         <div
+          className="cta-grid cta-pad-sm"
           style={{
             background: "var(--ink)",
             color: "var(--paper)",
             borderRadius: "var(--radius-lg)",
-            padding: "44px 48px",
-            display: "grid",
-            gridTemplateColumns: "1.4fr 1fr",
-            gap: 32,
-            alignItems: "center",
           }}
         >
           <div>

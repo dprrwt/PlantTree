@@ -265,6 +265,7 @@ export interface UttarakhandMapProps {
   onSelect?: (id: string) => void;
   height?: number;
   compact?: boolean;
+  className?: string;
 }
 
 export function UttarakhandMap({
@@ -273,9 +274,11 @@ export function UttarakhandMap({
   onSelect,
   height = 380,
   compact,
+  className,
 }: UttarakhandMapProps) {
   return (
     <div
+      className={className}
       style={{
         position: "relative",
         width: "100%",
