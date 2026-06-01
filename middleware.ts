@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 // Refreshes the Supabase auth session cookie on every request that matches the
 // `config.matcher` below. Without this, the JWT can expire mid-session and the
 // user gets silently logged out. Skipping it on static/asset/api routes.
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
     request: { headers: request.headers },
   });
